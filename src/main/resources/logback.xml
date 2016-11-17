@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="10 seconds">
+    <property file="${CATALINA_BASE}/conf/nomothesia.properties"/>
+    <property name="logfilesLocation" value="${logging.location:-${CATALINA_BASE}/logs}"/>
+    <property name="logMaxHistory" value="${logging.maxHistory:-30}"/>
+
+    <contextName>nomothesia</contextName>
+
+    <appender name="nomothesiaFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${logfilesLocation}/nomothesia.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${logfilesLocation}/nomothesia-%d.txt
+            </fileNamePattern>
+            <maxHistory>${logMaxHistory}</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <Pattern>%date{ISO8601} [%t] %-5p [%25c:%L] - %msg%n %ex{30}</Pattern>
+        </encoder>
+    </appender>
+
+    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date{ISO8601} %-5level %logger{36} - %msg%n %ex{30}</pattern>
+        </encoder>
+    </appender>
+
+
+    <logger name="com.eurodyn.esma.trace" level="TRACE">
+        <appender-ref ref="nomothesiaFile" />
+    </logger>
+
+    <root level="info">
+        <appender-ref ref="stdout" />
+    </root>
+</configuration>
