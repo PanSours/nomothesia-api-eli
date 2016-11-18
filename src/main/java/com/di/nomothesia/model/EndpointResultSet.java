@@ -2,7 +2,6 @@
 package com.di.nomothesia.model;
 
 public class EndpointResultSet {
-    
     private String query;
     private String results;
     private String message;
@@ -30,5 +29,4 @@ public class EndpointResultSet {
     public void setMessage(String message) {
         this.message = message;
     }
-        
 }

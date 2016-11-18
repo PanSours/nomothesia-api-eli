@@ -4,8 +4,7 @@ package com.di.nomothesia.model;
 import java.util.ArrayList;
 
 public class GovernmentGazette {
-    
-    private String URI;
+    private String uri;
     private int docs;
     private String issue;
     private String year;
@@ -15,11 +14,10 @@ public class GovernmentGazette {
     private ArrayList<LegalDocument> documents;
     private String date;
     private int issues;
+
     public GovernmentGazette() {
-        
+        //Empty Constructor
     }
-    
-    //Setters-Getters for GovernmentGazette
     
     public String getFileName() {
         return fileName;
@@ -46,7 +44,7 @@ public class GovernmentGazette {
     }
 
     public String getURI() {
-        return URI;
+        return uri;
     }
 
     public int getDocs() {
@@ -73,8 +71,8 @@ public class GovernmentGazette {
         this.title = title;
     }
 
-    public void setURI(String URI) {
-        this.URI = URI;
+    public void setURI(String uri) {
+        this.uri = uri;
     }
 
 
@@ -90,12 +88,12 @@ public class GovernmentGazette {
         this.documents = lds;
     }
     
-     public ArrayList<LegalDocument> getList() {
+    public ArrayList<LegalDocument> getList() {
         return this.documents;
     }
 
     public void setPublicationDate(String publicationDate) {
-        this.date= publicationDate;
+        this.date = publicationDate;
     }
 
     public ArrayList<LegalDocument> getDocuments() {

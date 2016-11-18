@@ -1,11 +1,16 @@
 
 package com.di.nomothesia.model;
 
+import com.di.nomothesia.config.AppConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class LegalDocument {
-     
+    protected final Logger log = LoggerFactory.getLogger(LegalDocument.class);
+
     private List<Article> articles;
     private List<Chapter> chapters;
     private List<Part> parts;
@@ -15,10 +20,10 @@ public class LegalDocument {
     private List<String> tags;
     private List<String> images;
     private String title;
-    private String URI;
+    private String uri;
     private String publicationDate;
-    private String FEK;
-    private String FEKfile;
+    private String fek;
+    private String fekFile;
     private String decisionType;
     private String year;
     private String id;
@@ -26,28 +31,24 @@ public class LegalDocument {
     private String place;
     
     public LegalDocument() {
-        
-        articles = new ArrayList<Article>();
-        chapters = new ArrayList<Chapter>();
-        parts = new ArrayList<Part>();
-        signers = new ArrayList<Signer>();
-        citations = new ArrayList<Citation>();
-        images = new ArrayList<String>();
-        issues = new ArrayList<String>();
-        this.tags = new ArrayList<String>();
-
+        articles = new ArrayList<>();
+        chapters = new ArrayList<>();
+        parts = new ArrayList<>();
+        signers = new ArrayList<>();
+        citations = new ArrayList<>();
+        images = new ArrayList<>();
+        issues = new ArrayList<>();
+        this.tags = new ArrayList<>();
     }
     
-    //Setters-Getters for LegalDocument
-    
-     public List<String> getIssues() {
+    public List<String> getIssues() {
         return issues;
     }
     
     public List<String> getImages() {
         return images;
     }
-     
+
     public List<Part> getParts() {
         return parts;
     }
@@ -95,16 +96,17 @@ public class LegalDocument {
     public String getPlace() {
         return place;
     }
+
     public void setTitle(String title) {
         this.title = title;
     }
     
     public String getURI() {
-        return URI;
+        return uri;
     }
 
-    public void setURI(String URI) {
-        this.URI = URI;
+    public void setURI(String uri) {
+        this.uri = uri;
     }
     
     public String getPublicationDate() {
@@ -116,19 +118,19 @@ public class LegalDocument {
     }
     
     public String getFEKfile() {
-        return FEKfile;
+        return fekFile;
     }
     
-    public void setFEKfile(String FEKfile) {
-        this.FEKfile = FEKfile;
+    public void setFEKfile(String fekFile) {
+        this.fekFile = fekFile;
     }
     
     public String getFEK() {
-        return FEK;
+        return fek;
     }
     
-    public void setFEK(String FEK) {
-        this.FEK = FEK;
+    public void setFEK(String fek) {
+        this.fek = fek;
     }
     
     public String getDecisionType() {
@@ -172,85 +174,90 @@ public class LegalDocument {
     }
 
     public List<Fragment> applyModifications(List<Modification> mods) {
-        List<Fragment> frags= new ArrayList<Fragment>();
-        int issue_flag=0;
+        List<Fragment> frags = new ArrayList<>();
+        boolean issueFlag = false;
+
         for (Modification mod : mods) {
             String[] hierarchy = mod.getPatient().split("/");
-            System.out.println("last"+hierarchy[hierarchy.length-1]);
-            try{
-                if(mod.getType().contains("Edit")){
-                    if(hierarchy[hierarchy.length-2].equals("passage")){
-                        int count3 = Integer.parseInt(hierarchy[hierarchy.length-1]) - 1;
-                        int count2 = Integer.parseInt(hierarchy[hierarchy.length-3]) - 1;
-                        int count1 = Integer.parseInt(hierarchy[hierarchy.length-5]) - 1;
+            log.info("last {}", hierarchy[hierarchy.length - 1]);
+
+            try {
+                if (mod.getType().contains("Edit")) {
+                    if ("passage".equals(hierarchy[hierarchy.length - 2])) {
+                        int count3 = Integer.parseInt(hierarchy[hierarchy.length - 1]) - 1;
+                        int count2 = Integer.parseInt(hierarchy[hierarchy.length - 3]) - 1;
+                        int count1 = Integer.parseInt(hierarchy[hierarchy.length - 5]) - 1;
                         Passage passage = (Passage) mod.getFragment();
-                        passage.setId(this.articles.get(count1).getParagraphs().get(count2).getPassages().get(count3).getId());
+                        passage.setId(this.articles.get(count1).getParagraphs().get(count2).getPassages().get(
+                                count3).getId());
                         frags.add(this.articles.get(count1).getParagraphs().get(count2).getPassages().get(count3));
-                        String URI = this.articles.get(count1).getParagraphs().get(count2).getPassages().get(count3).getURI();
+                        String uriLocal = this.articles.get(count1).getParagraphs().get(count2).getPassages().get(
+                                count3).getURI();
                         this.articles.get(count1).getParagraphs().get(count2).getPassages().set(count3, passage);
-                        this.articles.get(count1).getParagraphs().get(count2).getPassages().get(count3).setURI(URI);
-                        mod.setURI(URI);
-                    }
-                    else if(hierarchy[hierarchy.length-2].equals("case")){
-                        int count3 = Integer.parseInt(hierarchy[hierarchy.length-1]) - 1;
-                        int count2 = Integer.parseInt(hierarchy[hierarchy.length-3]) - 1;
-                        int count1 = Integer.parseInt(hierarchy[hierarchy.length-5]) - 1;
+                        this.articles.get(count1).getParagraphs().get(count2).getPassages().get(count3).setURI(
+                                uriLocal);
+                        mod.setURI(uriLocal);
+                    } else if ("case".equals(hierarchy[hierarchy.length - 2])) {
+                        int count3 = Integer.parseInt(hierarchy[hierarchy.length - 1]) - 1;
+                        int count2 = Integer.parseInt(hierarchy[hierarchy.length - 3]) - 1;
+                        int count1 = Integer.parseInt(hierarchy[hierarchy.length - 5]) - 1;
                         Case case1 = (Case) mod.getFragment();
-                        case1.setId(this.articles.get(count1).getParagraphs().get(count2).getCaseList().get(count3).getId());
+                        case1.setId(this.articles.get(count1).getParagraphs().get(count2).getCaseList().get(
+                                count3).getId());
                         frags.add(this.articles.get(count1).getParagraphs().get(count2).getCaseList().get(count3));
-                        String URI = this.articles.get(count1).getParagraphs().get(count2).getCaseList().get(count3).getURI();
+                        String uriLocal = this.articles.get(count1).getParagraphs().get(count2).getCaseList().get(
+                                count3).getURI();
                         this.articles.get(count1).getParagraphs().get(count2).getCaseList().set(count3, case1);
-                        this.articles.get(count1).getParagraphs().get(count2).getCaseList().get(count3).setURI(URI);
-                        mod.setURI(URI);
-                    }
-                    else if(hierarchy[hierarchy.length-2].equals("paragraph")){
-                        int count2 = Integer.parseInt(hierarchy[hierarchy.length-1]) - 1;
-                        int count1 = Integer.parseInt(hierarchy[hierarchy.length-3]) - 1;
+                        this.articles.get(count1).getParagraphs().get(count2).getCaseList().get(count3).setURI(
+                                uriLocal);
+                        mod.setURI(uriLocal);
+                    } else if ("paragraph".equals(hierarchy[hierarchy.length - 2])) {
+                        int count2 = Integer.parseInt(hierarchy[hierarchy.length - 1]) - 1;
+                        int count1 = Integer.parseInt(hierarchy[hierarchy.length - 3]) - 1;
                         Paragraph paragraph = (Paragraph) mod.getFragment();
                         paragraph.setId(this.articles.get(count1).getParagraphs().get(count2).getId());
                         frags.add(this.articles.get(count1).getParagraphs().get(count2));
-                        String URI = this.articles.get(count1).getParagraphs().get(count2).getURI();
+                        String uriLocal = this.articles.get(count1).getParagraphs().get(count2).getURI();
                         this.articles.get(count1).getParagraphs().set(count2, paragraph);
-                        this.articles.get(count1).getParagraphs().get(count2).setURI(URI);
-                        mod.setURI(URI);
+                        this.articles.get(count1).getParagraphs().get(count2).setURI(uriLocal);
+                        mod.setURI(uriLocal);
                     }
-                }
-                else if(mod.getType().contains("Addition")){
-                    if(hierarchy[hierarchy.length-2].equals("paragraph")){
-                        int count2 = Integer.parseInt(hierarchy[hierarchy.length-1]) - 1;
-                        int count1 = Integer.parseInt(hierarchy[hierarchy.length-3]) - 1;
-                        if(mod.getFragment().getURI().contains("case")){
+                } else if (mod.getType().contains("Addition")) {
+                    if ("paragraph".equals(hierarchy[hierarchy.length - 2])) {
+                        int count2 = Integer.parseInt(hierarchy[hierarchy.length - 1]) - 1;
+                        int count1 = Integer.parseInt(hierarchy[hierarchy.length - 3]) - 1;
+                        if (mod.getFragment().getURI().contains("case")) {
                             Case case1 = (Case) mod.getFragment();
                             int size = this.articles.get(count1).getParagraphs().get(count2).getCaseList().size();
-                            case1.setId(this.articles.get(count1).getParagraphs().get(count2).getCaseList().size()+1);
+                            case1.setId(this.articles.get(count1).getParagraphs().get(count2).getCaseList().size() + 1);
                             this.articles.get(count1).getParagraphs().get(count2).getCaseList().add(case1);
-                            mod.setURI(this.articles.get(count1).getParagraphs().get(count2).getCaseList().get(size-1).getURI());
-                            mod.setURI(mod.getURI().substring(1,mod.getURI().length()-1)+size);
-                        }
-                        else{
+                            mod.setURI(this.articles.get(count1).getParagraphs().get(count2).getCaseList().get(
+                                    size - 1).getURI());
+                            mod.setURI(mod.getURI().substring(1, mod.getURI().length() - 1) + size);
+                        } else {
                             Passage passage = (Passage) mod.getFragment();
                             int size = this.articles.get(count1).getParagraphs().get(count2).getPassages().size();
-                            passage.setId(size+1);
+                            passage.setId(size + 1);
                             this.articles.get(count1).getParagraphs().get(count2).getPassages().add(passage);
-                            mod.setURI(this.articles.get(count1).getParagraphs().get(count2).getPassages().get(size-1).getURI());
-                            mod.setURI(mod.getURI().substring(1,mod.getURI().length()-1)+size);
+                            mod.setURI(this.articles.get(count1).getParagraphs().get(count2).getPassages().get(
+                                    size - 1).getURI());
+                            mod.setURI(mod.getURI().substring(1, mod.getURI().length() - 1) + size);
                         }
                     }
                 }
-            }
-            catch(Exception e){
-                if(issue_flag==0){
+            } catch (Exception e) {
+                if (!issueFlag) {
                     issues.add("mods");
-                    issue_flag=1;
+                    issueFlag = true;
                 }
+                log.error(e.getMessage());
             }
-            
         }
+
         return frags;
     }
 
     public void setPlace(String geometry) {
         this.place = geometry;
     }
-    
 }

@@ -2,6 +2,7 @@ package com.di.nomothesia.enums;
 
 /**
  * Created by psour on 14/11/2016.
+ *
  */
 public enum QueriesEnum {
     QUERY_1("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +

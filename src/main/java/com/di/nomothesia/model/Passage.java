@@ -2,8 +2,7 @@
 package com.di.nomothesia.model;
 
 public class Passage implements Fragment {
-   
-    private String URI; 
+    private String uri;
     private String text;
     private int id;
     private int status;
@@ -11,33 +10,42 @@ public class Passage implements Fragment {
     private Modification modification;
 
     public Passage() {
-
+        //Empty Constructor
     }
-    
-    //Setters-Getters for Passage
+
     @Override
     public int getStatus() {
         return status;
     }
     
     @Override
-    public void setStatus(int s) {
-        this.status = s;
+    public void setStatus(int status) {
+        this.status = status;
     }
     
     @Override
     public String getURI() {
-        return URI;
+        return uri;
+    }
+
+    @Override
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    @Override
+    public String getType() {
+        return type;
     }
     
-    public void setURI(String URI) {
-        this.URI = URI;
+    public void setURI(String uri) {
+        this.uri = uri;
     }
 
     public String getText() {
         return text;
     }
-   
+
     public void setText(String text) {
         this.text = text;
     }
@@ -57,15 +65,4 @@ public class Passage implements Fragment {
     public void setModification(Modification modification) {
         this.modification = modification;
     }
-
-    @Override
-    public void setType(String t) {
-        this.type = t;
-    }
-
-    @Override
-    public String getType() {
-        return type;
-    }
-    
 }

@@ -4,31 +4,27 @@ package com.di.nomothesia.model;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Paragraph implements Fragment{
-    
+public class Paragraph implements Fragment {
     private List<Passage> passages;
     private List<Case> caseList;
     private List<String> images;
     private String table;
-    private String URI;
+    private String uri;
     private String id;
     private int status;
     private String type;
     
     public Paragraph() {
-        
-        this.passages = new ArrayList<Passage>();
+        this.passages = new ArrayList<>();
         //pass.add(new Passage());
-        this.caseList = new ArrayList<Case>();
-        this.images = new ArrayList<String>();
+        this.caseList = new ArrayList<>();
+        this.images = new ArrayList<>();
         //cas.add(new Case());
-        
     }
-    
-    //Setters-Getters for Paragraph
+
     @Override
-    public void setType(String t) {
-        this.type = t;
+    public void setType(String type) {
+        this.type = type;
     }
 
     @Override
@@ -76,11 +72,11 @@ public class Paragraph implements Fragment{
     
     @Override
     public String getURI() {
-        return URI;
+        return uri;
     }
 
     public void setURI(String uri) {
-        this.URI = uri;
+        this.uri = uri;
     }
 
     public String getId() {

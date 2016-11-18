@@ -2,12 +2,11 @@
 package com.di.nomothesia.model;
 
 public class Signer {
-    
     private String fullName;
     private String title;
     
     public Signer() {
-        
+        //Empty Constructor
     }
     
     //Setters-Getters for Signer
@@ -27,5 +26,4 @@ public class Signer {
     public void setTitle(String title) {
         this.title = title;
     }
-    
 }

@@ -4,39 +4,52 @@ package com.di.nomothesia.model;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Part implements Fragment{
-    
-    private String Title;
+public class Part implements Fragment {
+    private String title;
     private int id;
-    private String URI;
-    List<Article> articles;
-    List<Chapter> chapters;
+    private String uri;
+    private List<Article> articles;
+    private List<Chapter> chapters;
     private int status;
     private String type;
     
     public Part() {
-        this.chapters = new ArrayList<Chapter>();
-        this.articles = new ArrayList<Article>();
+        this.chapters = new ArrayList<>();
+        this.articles = new ArrayList<>();
         status = 0;
     }
-    
-    //Setters-Getters for Article
+
     @Override
-    public void setType(String t) {
-        this.type = t;
+    public void setType(String type) {
+        this.type = type;
     }
 
     @Override
     public String getType() {
         return type;
     }
-    
-    public String getTitle() {
-        return Title;
+
+    @Override
+    public String getURI() {
+        return uri;
+    }
+
+    @Override
+    public int getStatus() {
+        return status;
+    }
+
+    @Override
+    public void setStatus(int status) {
+        this.status = status;
     }
     
-    public void setTitle(String Title) {
-        this.Title = Title;
+    public String getTitle() {
+        return title;
+    }
+    
+    public void setTitle(String title) {
+        this.title = title;
     }
     
     public int getId() {
@@ -47,13 +60,8 @@ public class Part implements Fragment{
         this.id = id;
     }
     
-    @Override
-    public String getURI() {
-        return URI;
-    }
-    
-    public void setURI(String URI) {
-        this.URI = URI;
+    public void setURI(String uri) {
+        this.uri = uri;
     }
     
     public List<Article> getArticles() {
@@ -71,16 +79,5 @@ public class Part implements Fragment{
     public void setChapters(List<Chapter> chapters) {
         this.chapters = chapters;
     }
-
-    @Override
-    public int getStatus() {
-        return status;
-    }
-
-    @Override
-    public void setStatus(int s) {
-        this.status = s;
-    }
-    
 }
 
