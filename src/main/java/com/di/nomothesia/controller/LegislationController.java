@@ -5,6 +5,7 @@ import com.di.nomothesia.model.EndpointResultSet;
 import com.di.nomothesia.model.Fragment;
 import com.di.nomothesia.model.LegalDocument;
 import com.di.nomothesia.model.Modification;
+import com.di.nomothesia.service.LegislationService;
 import com.di.nomothesia.service.impl.LegislationServiceImpl;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,6 +17,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.transform.TransformerException;
 //import org.slf4j.Logger;
 //import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +36,9 @@ import org.springframework.web.servlet.ModelAndView;
  */
 @Controller
 public class LegislationController {
+
+    @Autowired
+    LegislationService legislationService;
 	
 //	private static final Logger logger = LoggerFactory.getLogger(LegislationController.class);
 	
@@ -49,11 +54,9 @@ public class LegislationController {
         
 	@RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/enacted", method = RequestMethod.GET)
 	public String presentOriginalLegalDocument(@PathVariable String type, @PathVariable String year, @PathVariable String id, Model model, Locale locale) throws NomothesiaException {
-		
-            LegislationServiceImpl lds = new LegislationServiceImpl();
-            LegalDocument legaldoc = lds.getById(type, year, id, 1);
+            LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
             model.addAttribute("legaldoc", legaldoc);
-            List<Modification> legalmods = lds.getAllModificationsById(type, year, id, 1, null);
+            List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, null);
             model.addAttribute("legalmods", legalmods);
             model.addAttribute("id","custom-bootstrap-menu");
             model.addAttribute("locale",locale);
@@ -73,11 +76,9 @@ public class LegislationController {
         
         @RequestMapping(value = "/{type}/{year:\\d+}/{id}", method = RequestMethod.GET)
 	public String presentUpdatedLegalDocument(@PathVariable String type, @PathVariable String year, @PathVariable String id, Model model, Locale locale) throws NomothesiaException {
-            
-            LegislationServiceImpl lds = new LegislationServiceImpl();
-            LegalDocument legaldoc = lds.getById(type, year, id, 1);
-            List<Modification> legalmods = lds.getAllModificationsById(type, year, id, 1, null);
-            List<Fragment> frags = lds.getUpdatedById(legaldoc, legalmods);
+            LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
+            List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, null);
+            List<Fragment> frags = legislationService.getUpdatedById(legaldoc, legalmods);
             model.addAttribute("legalmods", legalmods);
             model.addAttribute("fragschanced", frags);
             model.addAttribute("legaldoc", legaldoc);
@@ -99,11 +100,9 @@ public class LegislationController {
         
         @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/{type1}/{id1}/{type2}/{id2}", method = RequestMethod.GET)
 	public String presentLegalFragment(@PathVariable String type, @PathVariable String year, @PathVariable String id, @PathVariable String type1, @PathVariable String id1, @PathVariable String type2, @PathVariable String id2, Model model, Locale locale) throws NomothesiaException {
-            
-            LegislationServiceImpl lds = new LegislationServiceImpl();
-            LegalDocument legaldoc = lds.getById(type, year, id, 1);
-            List<Modification> legalmods = lds.getAllModificationsById(type, year, id, 1, null);
-            List<Fragment> frags = lds.getUpdatedById(legaldoc, legalmods);
+            LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
+            List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, null);
+            List<Fragment> frags = legislationService.getUpdatedById(legaldoc, legalmods);
             model.addAttribute("legalmods", legalmods);
             model.addAttribute("fragschanced", frags);
             model.addAttribute("legaldoc", legaldoc);
@@ -125,11 +124,9 @@ public class LegislationController {
         
         @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/{type1}/{id1}", method = RequestMethod.GET)
 	public String presentLegalFragmentless(@PathVariable String type, @PathVariable String year, @PathVariable String id, @PathVariable String type1, @PathVariable String id1, Model model, Locale locale) throws NomothesiaException {
-            
-            LegislationServiceImpl lds = new LegislationServiceImpl();
-            LegalDocument legaldoc = lds.getById(type, year, id, 1);
-            List<Modification> legalmods = lds.getAllModificationsById(type, year, id, 1, null);
-            List<Fragment> frags = lds.getUpdatedById(legaldoc, legalmods);
+            LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
+            List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, null);
+            List<Fragment> frags = legislationService.getUpdatedById(legaldoc, legalmods);
             model.addAttribute("legalmods", legalmods);
             model.addAttribute("fragschanced", frags);
             model.addAttribute("legaldoc", legaldoc);
@@ -154,13 +151,13 @@ public class LegislationController {
             
             String date = "";
             date += yyyy + "-" + mm + "-" + dd;
-            LegislationServiceImpl lds = new LegislationServiceImpl();
-            LegalDocument legaldoc = lds.getById(type, year, id, 1);
+            
+            LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
             if (legaldoc.getPublicationDate().compareTo(date) > 0){
              legaldoc = null;
             }
-            List<Modification> legalmods = lds.getAllModificationsById(type, year, id, 1, date);
-            List<Fragment> frags = lds.getUpdatedById(legaldoc, legalmods);
+            List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, date);
+            List<Fragment> frags = legislationService.getUpdatedById(legaldoc, legalmods);
             model.addAttribute("legalmods", legalmods);
             model.addAttribute("fragschanced", frags);
             model.addAttribute("legaldoc", legaldoc);
@@ -183,10 +180,9 @@ public class LegislationController {
         @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/{yyyy:\\d+}-{mm:\\d+}-{dd:\\d+}/data.xml", method = RequestMethod.GET, produces={"application/xml"})
         public ResponseEntity<String> exportDateToXML(@PathVariable String type, @PathVariable String year, @PathVariable String id, @PathVariable String yyyy, @PathVariable String mm, @PathVariable String dd, Locale locale) throws TransformerException, NomothesiaException {
             
-            LegislationServiceImpl lds = new LegislationServiceImpl();
             String date = "";
             date += yyyy + "-" + mm + "-" + dd;
-            String xml = lds.getUpdatedXMLByIdDate(type,year,id,2,date);
+            String xml = legislationService.getUpdatedXMLByIdDate(type,year,id,2,date);
             
             return new ResponseEntity<String>(xml,new HttpHeaders(),HttpStatus.CREATED);
         }
@@ -194,8 +190,7 @@ public class LegislationController {
         @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/{yyyy:\\d+}-{mm:\\d+}-{dd:\\d+}/data.rdf", method = RequestMethod.GET, produces={"application/xml"})
         public ResponseEntity<String> exportDateToRDF(@PathVariable String type, @PathVariable String year, @PathVariable String id, @PathVariable String yyyy, @PathVariable String mm, @PathVariable String dd, Locale locale) throws JAXBException, NomothesiaException {
             
-            LegislationServiceImpl lds = new LegislationServiceImpl();
-            String rdfResult = lds.getRDFById(type,year,id);
+            String rdfResult = legislationService.getRDFById(type,year,id);
             
             return new ResponseEntity<String>(rdfResult,new HttpHeaders(),HttpStatus.CREATED);
 	
@@ -204,15 +199,14 @@ public class LegislationController {
         @RequestMapping(value="/{type}/{year:\\d+}/{id:\\d+}/{yyyy:\\d+}-{mm:\\d+}-{dd:\\d+}/data.json", method = RequestMethod.GET)
 	public @ResponseBody LegalDocument exportDateToJSON(@PathVariable String type, @PathVariable String year, @PathVariable String id,@PathVariable String yyyy, @PathVariable String mm, @PathVariable String dd, Locale locale) throws NomothesiaException {
             
-            LegislationServiceImpl lds = new LegislationServiceImpl();
             String date = "";
             date += yyyy + "-" + mm + "-" + dd;
-            LegalDocument legaldoc = lds.getById(type, year, id, 2);
+            LegalDocument legaldoc = legislationService.getById(type, year, id, 2);
             if (legaldoc.getPublicationDate().compareTo(date) > 0){
              legaldoc = null;
             }
-            List<Modification> legalmods = lds.getAllModificationsById(type, year, id, 2, date);
-            lds.getUpdatedById(legaldoc, legalmods);
+            List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 2, date);
+            legislationService.getUpdatedById(legaldoc, legalmods);
             legaldoc.setPlace(null);
             
             return legaldoc;
@@ -222,15 +216,14 @@ public class LegislationController {
         @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/{yyyy:\\d+}-{mm:\\d+}-{dd:\\d+}/data.pdf", method = RequestMethod.GET, produces={"application/xml"})
         public ModelAndView exportDateToPDF(@PathVariable String type, @PathVariable String year, @PathVariable String id, @PathVariable String yyyy, @PathVariable String mm, @PathVariable String dd, Locale locale) throws NomothesiaException {
             
-            LegislationServiceImpl lds = new LegislationServiceImpl();
             String date = "";
             date += yyyy + "-" + mm + "-" + dd;
-            LegalDocument legaldoc = lds.getById(type, year, id, 2);
+            LegalDocument legaldoc = legislationService.getById(type, year, id, 2);
             if (legaldoc.getPublicationDate().compareTo(date) > 0){
              legaldoc = null;
             }
-            List<Modification> legalmods = lds.getAllModificationsById(type, year, id, 2, date);
-            lds.getUpdatedById(legaldoc, legalmods);
+            List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 2, date);
+            legislationService.getUpdatedById(legaldoc, legalmods);
             
             if(!legaldoc.getParts().isEmpty()){
                 return new ModelAndView("pdfView3", "legaldocument", legaldoc);
@@ -246,8 +239,7 @@ public class LegislationController {
         @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/enacted/data.xml", method = RequestMethod.GET, produces={"application/xml"})
         public ResponseEntity<String> exportToXML(@PathVariable String type, @PathVariable String year, @PathVariable String id, Locale locale) throws TransformerException, NomothesiaException {
             
-            LegislationServiceImpl lds = new LegislationServiceImpl();
-            String xml = lds.getXMLById(type,year,id,2);
+            String xml = legislationService.getXMLById(type,year,id,2);
             
             return new ResponseEntity<String>(xml,new HttpHeaders(),HttpStatus.CREATED);
         }
@@ -256,8 +248,7 @@ public class LegislationController {
         @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/enacted/data.rdf", method = RequestMethod.GET,  produces={"application/xml"})
 	public ResponseEntity<String> exportToRDF(@PathVariable String type, @PathVariable String year, @PathVariable String id, Locale locale) throws JAXBException, NomothesiaException {
             
-            LegislationServiceImpl lds = new LegislationServiceImpl();
-            String rdfResult = lds.getRDFById(type,year,id);
+            String rdfResult = legislationService.getRDFById(type,year,id);
             
             return new ResponseEntity<String>(rdfResult,new HttpHeaders(),HttpStatus.CREATED);
 	
@@ -265,9 +256,7 @@ public class LegislationController {
         
         @RequestMapping(value="/{type}/{year:\\d+}/{id:\\d+}/enacted/data.json", method = RequestMethod.GET)
 	public @ResponseBody LegalDocument exportToJSON(@PathVariable String type, @PathVariable String year, @PathVariable String id, Locale locale) throws NomothesiaException {
-            
-            LegislationServiceImpl lds = new LegislationServiceImpl();
-            LegalDocument legal = lds.getById(type,year,id,2);
+            LegalDocument legal = legislationService.getById(type,year,id,2);
             legal.setPlace(null);
             
             return legal;
@@ -277,8 +266,7 @@ public class LegislationController {
         @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/enacted/data.pdf", method = RequestMethod.GET)
 	public ModelAndView exportToPDF(@PathVariable String type, @PathVariable String year, @PathVariable String id, Locale locale) throws NomothesiaException {
             
-            LegislationServiceImpl lds = new LegislationServiceImpl();
-            LegalDocument legaldoc = lds.getById(type,year,id,2);
+            LegalDocument legaldoc = legislationService.getById(type,year,id,2);
             if(!legaldoc.getParts().isEmpty()){
                 return new ModelAndView("pdfView3", "legaldocument", legaldoc);
             }
@@ -292,9 +280,7 @@ public class LegislationController {
         
         @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/data.xml", method = RequestMethod.GET, produces={"application/xml"})
         public ResponseEntity<String> exportUpdatedToXML(@PathVariable String type, @PathVariable String year, @PathVariable String id, Locale locale) throws TransformerException, NomothesiaException {
-            
-            LegislationServiceImpl lds = new LegislationServiceImpl();
-            String xml = lds.getUpdatedXMLById(type,year,id,2);
+            String xml = legislationService.getUpdatedXMLById(type,year,id,2);
             
             return new ResponseEntity<String>(xml,new HttpHeaders(),HttpStatus.CREATED);
         }
@@ -302,9 +288,7 @@ public class LegislationController {
         
         @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/data.rdf", method = RequestMethod.GET,  produces={"application/xml"})
 	public ResponseEntity<String> exportUpdatedToRDF(@PathVariable String type, @PathVariable String year, @PathVariable String id, Locale locale) throws JAXBException, NomothesiaException {
-            
-            LegislationServiceImpl lds = new LegislationServiceImpl();
-            String rdfResult = lds.getRDFById(type,year,id);
+            String rdfResult = legislationService.getRDFById(type,year,id);
             
             return new ResponseEntity<String>(rdfResult,new HttpHeaders(),HttpStatus.CREATED);
 	
@@ -312,11 +296,9 @@ public class LegislationController {
         
         @RequestMapping(value="/{type}/{year:\\d+}/{id:\\d+}/data.json", method = RequestMethod.GET)
 	public @ResponseBody LegalDocument exportUpdatedToJSON(@PathVariable String type, @PathVariable String year, @PathVariable String id, Locale locale) throws NomothesiaException {
-            
-            LegislationServiceImpl lds = new LegislationServiceImpl();
-            LegalDocument legaldoc = lds.getById(type, year, id, 2);
-            List<Modification> legalmods = lds.getAllModificationsById(type, year, id, 2, null);
-            lds.getUpdatedById(legaldoc, legalmods);
+            LegalDocument legaldoc = legislationService.getById(type, year, id, 2);
+            List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 2, null);
+            legislationService.getUpdatedById(legaldoc, legalmods);
             legaldoc.setPlace(null);
             return legaldoc;
  
@@ -324,11 +306,9 @@ public class LegislationController {
         
         @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/data.pdf", method = RequestMethod.GET)
 	public ModelAndView exportUpdatedToPDF(@PathVariable String type, @PathVariable String year, @PathVariable String id, Locale locale) throws NomothesiaException {
-            
-            LegislationServiceImpl lds = new LegislationServiceImpl();
-            LegalDocument legaldoc = lds.getById(type, year, id, 2);
-            List<Modification> legalmods = lds.getAllModificationsById(type, year, id, 2, null);
-            lds.getUpdatedById(legaldoc, legalmods);
+            LegalDocument legaldoc = legislationService.getById(type, year, id, 2);
+            List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 2, null);
+            legislationService.getUpdatedById(legaldoc, legalmods);
             
             if(!legaldoc.getParts().isEmpty()){
                 return new ModelAndView("pdfView3", "legaldocument", legaldoc);
@@ -345,9 +325,8 @@ public class LegislationController {
 	public String search(@RequestParam Map<String,String> params, Model model, Locale locale) throws NomothesiaException {
             
             if(params != null){
-                LegislationServiceImpl lds = new LegislationServiceImpl();
-                List<LegalDocument> LDs = lds.searchLegislation(params);
-                List<String> tags = lds.getTags();
+                List<LegalDocument> LDs = legislationService.searchLegislation(params);
+                List<String> tags = legislationService.getTags();
                 model.addAttribute("legalDocuments", LDs);
                 model.addAttribute("tags",tags);
                 model.addAttribute("locale",locale);
@@ -396,8 +375,7 @@ public class LegislationController {
 	public String endpoint(@RequestParam Map<String,String> params, Model model, Locale locale) throws NomothesiaException {
             
             if(params.get("query") != null){
-                LegislationServiceImpl lds = new LegislationServiceImpl();
-                EndpointResultSet eprs = lds.sparqlQuery(params.get("query"),params.get("format"));
+                EndpointResultSet eprs = legislationService.sparqlQuery(params.get("query"),params.get("format"));
                 model.addAttribute("endpointResults", eprs);
                 model.addAttribute("format", params.get("format"));
             }
@@ -410,8 +388,7 @@ public class LegislationController {
 	public String endpoint( @PathVariable String id, Model model, Locale locale) throws NomothesiaException {
             
             if(id != null){
-                LegislationServiceImpl lds = new LegislationServiceImpl();
-                EndpointResultSet eprs = lds.sparqlQuery(id,"HTML");
+                EndpointResultSet eprs = legislationService.sparqlQuery(id,"HTML");
                 model.addAttribute("endpointResults", eprs);
                 model.addAttribute("locale",locale);
                 //model.addAttribute("format", params.get("format"));

@@ -167,7 +167,7 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                     "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
                     "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
                     "PREFIX metalex:<http://www.metalex.eu/metalex/2008-05-02#>\n" +
-                    "PREFIX leg: <" + uriBase + ">\n" +
+                    "PREFIX leg: <" + uriBase  + "ontology/>\n" +
                     "PREFIX dc: <http://purl.org/dc/terms/>\n" +
                     "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n" +
                     "\n" +
@@ -201,7 +201,7 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                     "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
                     "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
                     "PREFIX metalex:<http://www.metalex.eu/metalex/2008-05-02#>\n" +
-                    "PREFIX leg: <" + uriBase + ">\n" +
+                    "PREFIX leg: <" + uriBase  + "ontology/>\n" +
                     "PREFIX dc: <http://purl.org/dc/terms/>\n" +
                     "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n" +
                     "\n" +
@@ -239,7 +239,7 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                 result.close();
             }
 
-            try {
+            /*try {
                 int views = Integer.parseInt(legald.getViews()) + 1;
                 //UPDATE VIEWS
                 String queryString4 = "DELETE {\n" +
@@ -255,7 +255,7 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                 throw new NomothesiaException(ex);
             } finally {
                 con.close();
-            }
+            }*/
         } catch (OpenRDFException e) {
             throw new NomothesiaException(e);
         }
@@ -286,7 +286,7 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                         "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
                         "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
                         "PREFIX metalex:<http://www.metalex.eu/metalex/2008-05-02#>\n" +
-                        "PREFIX leg: <" + uriBase + ">\n" +
+                        "PREFIX leg: <" + uriBase  + "ontology/>\n" +
                         "PREFIX dc: <http://purl.org/dc/terms/>\n" +
                         "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n" +
                         "\n" +
@@ -403,7 +403,7 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                         "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
                         "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
                         "PREFIX metalex:<http://www.metalex.eu/metalex/2008-05-02#>\n" +
-                        "PREFIX leg: <" + uriBase + ">\n" +
+                        "PREFIX leg: <" + uriBase  + "ontology/>\n" +
                         "PREFIX dc: <http://purl.org/dc/terms/>\n" +
                         "\n" +
                         "SELECT DISTINCT ?part ?text ?html ?type ?title ?filename\n" +
@@ -1827,24 +1827,8 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
         String sesameServer = "";
         String repositoryID = "";
 
-        Properties props = new Properties();
-        InputStream fis = null;
-
-        try {
-
-            fis = getClass().getResourceAsStream("/nomothesia.properties");
-            props.load(fis);
-
-            // get the properties values
-            sesameServer = props.getProperty("SesameServer");
-            repositoryID = props.getProperty("SesameRepositoryID");
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         // Connect to Sesame
-        Repository repo = new HTTPRepository(sesameServer, repositoryID);
+        Repository repo = new HTTPRepository(applicationProperties.getSesameServer(), applicationProperties.getSesameRepositoryID());
         try {
 
             repo.initialize();
