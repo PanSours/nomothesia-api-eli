@@ -371,17 +371,16 @@ public class LegislationController {
             return "search";
 	}
         
-        @RequestMapping(value = "/endpoint", method = RequestMethod.GET)
+    @RequestMapping(value = "/endpoint", method = RequestMethod.GET)
 	public String endpoint(@RequestParam Map<String,String> params, Model model, Locale locale) throws NomothesiaException {
-            
-            if(params.get("query") != null){
-                EndpointResultSet eprs = legislationService.sparqlQuery(params.get("query"),params.get("format"));
-                model.addAttribute("endpointResults", eprs);
-                model.addAttribute("format", params.get("format"));
-            }
+        if(params.get("query") != null){
+            EndpointResultSet eprs = legislationService.sparqlQuery(params.get("query"),params.get("format"));
+            model.addAttribute("endpointResults", eprs);
+            model.addAttribute("format", params.get("format"));
+        }
+        model.addAttribute("locale",locale);
 
-            model.addAttribute("locale",locale);
-            return "endpoint";
+        return "endpoint";
 	}
         
         @RequestMapping(value = "/endpoint/query/{id}", method = RequestMethod.GET)

@@ -5,6 +5,8 @@ import com.di.nomothesia.model.EndpointResultSet;
 import com.di.nomothesia.model.GovernmentGazette;
 import com.di.nomothesia.model.LegalDocument;
 import com.di.nomothesia.model.Modification;
+import org.openrdf.query.QueryEvaluationException;
+import org.openrdf.repository.RepositoryException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -100,13 +102,42 @@ public interface LegalDocumentDAO {
      */
     List<String> getTags() throws NomothesiaException;
 
+    /**
+     * Gets the most viewed legal documents.
+     *
+     * @return List<LegalDocument>
+     * @throws NomothesiaException
+     */
     List<LegalDocument> getViewed() throws NomothesiaException;
 
+    /**
+     * Gets the most recent legal documents.
+     * @return List<LegalDocument>
+     * @throws NomothesiaException
+     */
     List<LegalDocument> getRecent() throws NomothesiaException;
 
+    /**
+     * Gets a legislation document's type by year order.
+     *
+     * @return String
+     * @throws NomothesiaException
+     */
     String getLegislationTypeByYear() throws NomothesiaException;
 
+    /**
+     * Gets all Fek statistics.
+     *
+     * @return List<GovernmentGazette>
+     * @throws NomothesiaException
+     */
     List<GovernmentGazette> getFEKStatistics() throws NomothesiaException;
 
+    /**
+     * Gets all legal documents statistics.
+     *
+     * @return List<ArrayList<String>>
+     * @throws NomothesiaException
+     */
     List<ArrayList<String>> getStatistics() throws NomothesiaException;
 }

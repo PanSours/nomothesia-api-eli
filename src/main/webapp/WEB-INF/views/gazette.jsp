@@ -8,7 +8,6 @@
 
 <!DOCTYPE html>
 <html lang="en">
-
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -17,107 +16,99 @@
         <title><spring:message code="title.gazette"/></title>
 
         <!-- Bootstrap -->
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
-        <link href='http://fonts.googleapis.com/css?family=Jura&subset=latin,greek' rel='stylesheet' type='text/css'>
-        <link href='http://fonts.googleapis.com/css?family=Comfortaa&subset=latin,greek' rel='stylesheet' type='text/css'>
-        <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/plug-ins/3cfcc339e89/integration/bootstrap/3/dataTables.bootstrap.css">
+        <link rel="stylesheet" href="/resources/css/bootstrap.min.css">
+        <link rel="stylesheet" href="/resources/css/bootstrap-theme.min.css">
+        <link rel='stylesheet' href='/resources/css/jura.css' type='text/css'>
+        <link rel='stylesheet' href='/resources/css/comfortaa.css' type='text/css'>
+        <link rel="stylesheet" href="/resources/css/dataTables.bootstrap.css" type="text/css">
 
         <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
         <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
         <!--[if lt IE 9]>
-        <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-        <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+        <script src="/resources/js/html5shiv.min.js"></script>
+        <script src="/resources/js/respond.min.js"></script>
         <![endif]-->
 
         <!-- Load CSS -->
         <link href="/resources/css/navbar.css" rel="stylesheet"/>
 
-        <!-- jQueryUI Calendar-->
-        <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>  
-
         <script type="text/javascript">
         window.onload = function () {
-                var chart = new CanvasJS.Chart("chartContainer", {
-                        title:{
-                               text: ""
-                        },
-                        axisX: {
-                                tickThickness: 0,
-                                interval: 1,
-                                intervalType: "year"
-                        },
-                        animationEnabled: false,
-                        toolTip: {
-                                shared: false
-                        },
-                        axisY: {
-                                lineThickness: 0,
-                                tickThickness: 0,
-                                interval: 20
-                        },
-                        data: [
-                        {        
-                                name: "ΦΕΚ τύπου 2",
-                                showInLegend: true,
-                                type: "stackedColumn100", 
-                                color: "#004B8D ",
-                                dataPoints: [
-                                {x: new Date(2006,0), y: 188},
-                                {x: new Date(2007,0), y: 209},
-                                {x: new Date(2008,0), y: 196},
-                                {x: new Date(2009,0), y: 177},
-                                {x: new Date(2010,0), y: 181},
-                                {x: new Date(2011,0), y: 213},
-                                {x: new Date(2012,0), y: 185},
-                                {x: new Date(2013,0), y: 203},
-                                {x: new Date(2014,0), y: 207},
-                                {x: new Date(2015,0), y: 0}
-                                ]
-                        }, 
-                        {        
-                                name: "ΦΕΚ τύπου 1",
-                                showInLegend: true,
-                                type: "stackedColumn100", 
-                                color: "#0074D9 ",
-                                dataPoints: [
-                                {x: new Date(2006,0), y: 46},
-                                {x: new Date(2007,0), y: 20},
-                                {x: new Date(2008,0), y: 33},
-                                {x: new Date(2009,0), y: 29},
-                                {x: new Date(2010,0), y: 32},
-                                {x: new Date(2011,0), y: 13},
-                                {x: new Date(2012,0), y: 30},
-                                {x: new Date(2013,0), y: 33},
-                                {x: new Date(2014,0), y: 24},
-                                {x: new Date(2015,0), y: 0}
-                                ]
-                        }, 
-                        {        
-                                name: "ΦΕΚ",
-                                showInLegend: true,
-                                type: "stackedColumn100", 
-                                color: "#4192D9 ",
-                                dataPoints: [
-                                {x: new Date(2006,0), y: 50},
-                                {x: new Date(2007,0), y: 66},
-                                {x: new Date(2008,0), y: 37},
-                                {x: new Date(2009,0), y: 33},
-                                {x: new Date(2010,0), y: 35},
-                                {x: new Date(2011,0), y: 46},
-                                {x: new Date(2012,0), y: 42},
-                                {x: new Date(2013,0), y: 52},
-                                {x: new Date(2014,0), y: 50},
-                                {x: new Date(2015,0), y: 0}
-                                ]
-                        }
-
+            var chart = new CanvasJS.Chart("chartContainer", {
+                    title:{
+                        text: ""
+                    },
+                    axisX: {
+                        tickThickness: 0,
+                        interval: 1,
+                        intervalType: "year"
+                    },
+                    animationEnabled: false,
+                    toolTip: {
+                        shared: false
+                    },
+                    axisY: {
+                        lineThickness: 0,
+                        tickThickness: 0,
+                        interval: 20
+                    },
+                    data: [{
+                        name: "<spring:message code='gazette.fek1' javaScriptEscape='true'/>",
+                        showInLegend: true,
+                        type: "stackedColumn100",
+                        color: "#004B8D ",
+                        dataPoints: [
+                        {x: new Date(2006,0), y: 188},
+                        {x: new Date(2007,0), y: 209},
+                        {x: new Date(2008,0), y: 196},
+                        {x: new Date(2009,0), y: 177},
+                        {x: new Date(2010,0), y: 181},
+                        {x: new Date(2011,0), y: 213},
+                        {x: new Date(2012,0), y: 185},
+                        {x: new Date(2013,0), y: 203},
+                        {x: new Date(2014,0), y: 207},
+                        {x: new Date(2015,0), y: 0}]
+                    },
+                    {
+                        name: "<spring:message code='gazette.fek1' javaScriptEscape='true'/>",
+                        showInLegend: true,
+                        type: "stackedColumn100",
+                        color: "#0074D9 ",
+                        dataPoints: [
+                        {x: new Date(2006,0), y: 46},
+                        {x: new Date(2007,0), y: 20},
+                        {x: new Date(2008,0), y: 33},
+                        {x: new Date(2009,0), y: 29},
+                        {x: new Date(2010,0), y: 32},
+                        {x: new Date(2011,0), y: 13},
+                        {x: new Date(2012,0), y: 30},
+                        {x: new Date(2013,0), y: 33},
+                        {x: new Date(2014,0), y: 24},
+                        {x: new Date(2015,0), y: 0}
                         ]
-                });
-
-        chart.render();
+                    },
+                    {
+                        name: "<spring:message code='gazette.fek' javaScriptEscape='true'/>",
+                        showInLegend: true,
+                        type: "stackedColumn100",
+                        color: "#4192D9 ",
+                        dataPoints: [
+                        {x: new Date(2006,0), y: 50},
+                        {x: new Date(2007,0), y: 66},
+                        {x: new Date(2008,0), y: 37},
+                        {x: new Date(2009,0), y: 33},
+                        {x: new Date(2010,0), y: 35},
+                        {x: new Date(2011,0), y: 46},
+                        {x: new Date(2012,0), y: 42},
+                        {x: new Date(2013,0), y: 52},
+                        {x: new Date(2014,0), y: 50},
+                        {x: new Date(2015,0), y: 0}]
+                    }]
+            });
+            chart.render();
         }
         </script>
+
         <script type="text/javascript" src="/resources/js/canvasjs.min.js"></script>
         <style>
             #footer {
@@ -126,11 +117,10 @@
                 width:100%;
                 height:60px;   /* Height of the footer */
             }
-        </style>    
-
+        </style>
     </head>
-    <body>
 
+    <body>
         <!-- Navigation Bar -->
         <div id="custom-bootstrap-menu" class="navbar navbar-default " role="navigation">
             <div class="container-fluid">

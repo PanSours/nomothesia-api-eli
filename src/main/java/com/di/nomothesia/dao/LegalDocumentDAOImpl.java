@@ -3,6 +3,8 @@ package com.di.nomothesia.dao;
 import com.di.nomothesia.NomothesiaException;
 import com.di.nomothesia.comparators.LegalDocumentSort;
 import com.di.nomothesia.config.AppConfig;
+import com.di.nomothesia.enums.LegislationTypesEnum;
+import com.di.nomothesia.enums.YearsEnum;
 import com.di.nomothesia.model.Chapter;
 import com.di.nomothesia.model.Article;
 import com.di.nomothesia.model.Case;
@@ -20,10 +22,7 @@ import com.di.nomothesia.model.Signer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -65,6 +64,7 @@ import org.openrdf.query.TupleQueryResultHandlerException;
 import org.openrdf.query.Update;
 import org.openrdf.query.resultio.sparqlxml.SPARQLResultsXMLWriter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 //import org.openrdf.query.resultio.stSPARQLQueryResultFormat;
 //import eu.earthobservatory.org.StrabonEndpoint.client.*;
@@ -1665,41 +1665,13 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
     }
 
     @Override
-    public EndpointResultSet sparqlQuery(EndpointResultSet endpointResult, String format) {
+    public EndpointResultSet sparqlQuery(EndpointResultSet endpointResult, String format) throws NomothesiaException {
         String results = "";
-
-        String sesameServer = "";
-        String repositoryID = "";
-
-        Properties props = new Properties();
-        InputStream fis = null;
-
-        try {
-            fis = getClass().getResourceAsStream("/nomothesia.properties");
-            props.load(fis);
-            // get the properties values
-            sesameServer = props.getProperty("SesameServer");
-            repositoryID = props.getProperty("SesameRepositoryID");
-
-        } catch (IOException e) {
-            //System.out.println("1");
-            endpointResult.setMessage(e.toString());
-            e.printStackTrace();
-        }
-
-        // connect to Sesame
-        Repository repo = new HTTPRepository(sesameServer, repositoryID);
-        try {
-            repo.initialize();
-        } catch (RepositoryException ex) {
-            //System.out.println("2");
-            endpointResult.setMessage(ex.toString());
-        }
 
         if (endpointResult.getQuery().contains("DESCRIBE")) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             try {
-                RepositoryConnection con = repo.getConnection();
+                RepositoryConnection con = getSesameConnection();
                 try {
                     // use SPARQL query
                     RDFXMLWriter writer = new RDFXMLWriter(out);
@@ -1712,27 +1684,18 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                     xml = xml.replaceAll(">", "&gt");
                     results += xml + "</pre>";
                     results += "</td></tr>";
-                } catch (IOException ex) {
+                } catch (MalformedQueryException | QueryEvaluationException | IOException | RDFHandlerException ex) {
                     endpointResult.setMessage(ex.toString());
-                } catch (MalformedQueryException ex) {
-                    endpointResult.setMessage(ex.toString());
-                } catch (QueryEvaluationException ex) {
-                    endpointResult.setMessage(ex.toString());
-                } catch (RDFHandlerException ex) {
-                    endpointResult.setMessage(ex.toString());
-                } finally {
                 }
             } catch (RepositoryException ex) {
                 endpointResult.setMessage(ex.toString());
             }
         } else {
-
             if (format.equals("XML")) {
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
                 try {
                     SPARQLResultsXMLWriter sparqlWriter = new SPARQLResultsXMLWriter(out);
-
-                    RepositoryConnection con = repo.getConnection();
+                    RepositoryConnection con = getSesameConnection();
                     try {
                         TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, endpointResult.getQuery());
                         tupleQuery.evaluate(sparqlWriter);
@@ -1743,15 +1706,7 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                         xml = xml.replaceAll(">", "&gt");
                         results += xml + "</pre>";
                         results += "</td></tr>";
-                    } catch (IOException ex) {
-                        endpointResult.setMessage(ex.toString());
-                    } catch (MalformedQueryException ex) {
-                        endpointResult.setMessage(ex.toString());
-                    } catch (QueryEvaluationException ex) {
-                        endpointResult.setMessage(ex.toString());
-                    } catch (RepositoryException ex) {
-                        endpointResult.setMessage(ex.toString());
-                    } catch (TupleQueryResultHandlerException ex) {
+                    } catch (IOException | MalformedQueryException | QueryEvaluationException | RepositoryException | TupleQueryResultHandlerException ex) {
                         endpointResult.setMessage(ex.toString());
                     } finally {
                         try {
@@ -1760,8 +1715,6 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                             endpointResult.setMessage(ex.toString());
                         }
                     }
-                } catch (RepositoryException ex) {
-                    Logger.getLogger(LegalDocumentDAOImpl.class.getName()).log(Level.SEVERE, null, ex);
                 } finally {
                     try {
                         out.close();
@@ -1772,16 +1725,13 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
             } else if (format.equals("HTML")) {
                 TupleQueryResult result;
                 try {
-                    RepositoryConnection con = repo.getConnection();
+                    RepositoryConnection con = getSesameConnection();
                     try {
-
                         //System.out.println(endpointResult.getQuery());
                         TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, endpointResult.getQuery());
                         result = tupleQuery.evaluate();
-
                         try {
                             //iterate the result set
-
                             List<String> bindingNames = result.getBindingNames();
                             results += "<tr>";
                             for (String bindingName : bindingNames) {
@@ -1801,11 +1751,18 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                                 results += "</tr>";
                             }
                         } finally {
-                            result.close();
+                            try {
+                                result.close();
+                            } catch (QueryEvaluationException qe) {
+                                throw new NomothesiaException(qe);
+                            }
                         }
-
                     } finally {
-                        con.close();
+                        try {
+                            con.close();
+                        } catch (RepositoryException re) {
+                            throw new NomothesiaException(re);
+                        }
                     }
                 } catch (OpenRDFException e) {
                     //System.out.println("3");
@@ -1816,8 +1773,8 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
 
         }
         endpointResult.setResults(results);
-        return endpointResult;
 
+        return endpointResult;
     }
 
     @Override
@@ -2236,29 +2193,15 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
     }
 
     @Override
-    public List<String> getTags() {
+    public List<String> getTags() throws NomothesiaException {
         List<String> tags = new ArrayList<>();
-
-        // Connect to Sesame
-        final String sesameServer = applicationProperties.getSesameServer();
-        final String repositoryID = applicationProperties.getSesameRepositoryID();
-        Repository repo = new HTTPRepository(sesameServer, repositoryID);
-
-        try {
-            repo.initialize();
-        } catch (RepositoryException ex) {
-            Logger.getLogger(LegalDocumentDAOImpl.class.getName()).log(Level.SEVERE, null, ex);
-        }
 
         TupleQueryResult result;
 
         try {
-
-            RepositoryConnection con = repo.getConnection();
-
+            RepositoryConnection con = getSesameConnection();
             try {
-
-                String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                String getTagsQuery = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
                         "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
                         "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
                         "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
@@ -2273,27 +2216,34 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                         "}\n" +
                         "ORDER BY ?tag";
 
-                //System.out.println(queryString);
-                TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, queryString);
+                //System.out.println(getTagsQuery);
+                TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, getTagsQuery);
                 result = tupleQuery.evaluate();
 
                 try {
                     // iterate the result set
                     while (result.hasNext()) {
-
                         BindingSet bindingSet = result.next();
                         String tag = bindingSet.getValue("tag").toString().replace("@el", "");
                         tags.add(CommonUtils.trimDoubleQuotes(tag));
                     }
 
                 } finally {
-                    result.close();
+                    try {
+                        result.close();
+                    } catch (QueryEvaluationException qe) {
+                        throw new NomothesiaException(qe);
+                    }
                 }
             } finally {
-                con.close();
+                try {
+                    con.close();
+                } catch (RepositoryException re) {
+                    throw new NomothesiaException(re);
+                }
             }
         } catch (OpenRDFException e) {
-            // handle exception
+            throw new NomothesiaException(e);
         }
 
         return tags;
@@ -2301,30 +2251,15 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
     }
 
     @Override
-    public List<LegalDocument> getViewed() {
-
-        List<LegalDocument> legalviewed = new ArrayList<LegalDocument>();
-
-        // Connect to Sesame
-        final String sesameServer = applicationProperties.getSesameServer();
-        final String repositoryID = applicationProperties.getSesameRepositoryID();
-        Repository repo = new HTTPRepository(sesameServer, repositoryID);
-
-        try {
-            repo.initialize();
-        } catch (RepositoryException ex) {
-            Logger.getLogger(LegalDocumentDAOImpl.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public List<LegalDocument> getViewed() throws NomothesiaException {
+        List<LegalDocument> legalviewed = new ArrayList<>();
 
         TupleQueryResult result;
 
         try {
-
-            RepositoryConnection con = repo.getConnection();
-
+            RepositoryConnection con = getSesameConnection();
             try {
-
-                String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                String getMostViewedQuery = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
                         "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
                         "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
                         "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
@@ -2345,119 +2280,73 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                         "ORDER BY ASC(?views)\n" +
                         "LIMIT 6";
 
-                //System.out.println(queryString);
-                TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, queryString);
+                //System.out.println(getMostViewedQuery);
+                TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, getMostViewedQuery);
                 result = tupleQuery.evaluate();
 
                 try {
-
                     // iterate the result set
                     while (result.hasNext()) {
-
                         BindingSet bindingSet = result.next();
-                        LegalDocument legald = new LegalDocument();
+                        LegalDocument legalDocument = new LegalDocument();
                         //String[] URIs = bindingSet.getValue("uri").toString().split("uoa.gr/");
-                        legald.setURI(CommonUtils.trimDoubleQuotes(bindingSet.getValue("uri").toString()));
+                        legalDocument.setURI(CommonUtils.trimDoubleQuotes(bindingSet.getValue("uri").toString()));
                         String title = "";
                         if (bindingSet.getValue("title") != null) {
                             title = bindingSet.getValue("title").toString().replace("@el", "");
                         } else {
-                            title = legald.getDecisionType() + "" + legald.getYear() + " " + legald.getId();
+                            title = legalDocument.getDecisionType() + "" + legalDocument.getYear() + " " + legalDocument.getId();
                         }
                         if (title.length() > 200) {
                             title = title.substring(0, 150) + "[...]\"";
                         }
-                        legald.setTitle(CommonUtils.trimDoubleQuotes(title));
+                        legalDocument.setTitle(CommonUtils.trimDoubleQuotes(title));
                         String id = bindingSet.getValue("id").toString().replace("^^", "").replace("\"", "");
-                        legald.setId(CommonUtils.trimDoubleQuotes(id));
+                        legalDocument.setId(CommonUtils.trimDoubleQuotes(id));
                         String date = bindingSet.getValue("date").toString().replace(
                                 "^^<http://www.w3.org/2001/XMLSchema#date>", "");
                         date = CommonUtils.trimDoubleQuotes(date);
-                        legald.setPublicationDate(date);
+                        legalDocument.setPublicationDate(date);
                         String[] year = date.split("-");
-                        legald.setYear(year[0]);
+                        legalDocument.setYear(year[0]);
 
                         String type = bindingSet.getValue("type").toString();
-
-                        if (type.equals(uriBase+ "ontology/Constitution")) {
-                            legald.setDecisionType("con");
-                        } else if (type.equals(uriBase+ "ontology/PresidentialDecree")) {
-                            legald.setDecisionType("pd");
-                        } else if (type.equals(uriBase+ "ontology/Law")) {
-                            legald.setDecisionType("law");
-                        } else if (type.equals(uriBase+ "ontology/ActOfMinisterialCabinet")) {
-                            legald.setDecisionType("amc");
-                        } else if (type.equals(uriBase+ "ontology/MinisterialDecision")) {
-                            legald.setDecisionType("md");
-                        } else if (type.equals(uriBase+ "ontology/RoyalDecree")) {
-                            legald.setDecisionType("rd");
-                        } else if (type.equals(uriBase+ "ontology/LegislativeAct")) {
-                            legald.setDecisionType("la");
-                        } else if (type.equals(uriBase+ "ontology/RegulatoryProvision")) {
-                            legald.setDecisionType("rp");
-                        }
-
-                        legalviewed.add(legald);
-
+                        legalviewed.add(CommonUtils.decideLegalDocumentType(legalDocument, type));
                     }
 
                 } finally {
-                    result.close();
+                    try {
+                        result.close();
+                    } catch (QueryEvaluationException qe) {
+                        throw new NomothesiaException(qe);
+                    }
                 }
 
             } finally {
-                con.close();
+                try {
+                    con.close();
+                } catch (RepositoryException re) {
+                    throw new NomothesiaException(re);
+                }
             }
 
         } catch (OpenRDFException e) {
-            // handle exception
+            throw new NomothesiaException(e);
         }
 
         return legalviewed;
-
     }
 
     @Override
-    public String getLegislationTypeByYear() {
-
-        List<LegalDocument> legalviewed = new ArrayList<LegalDocument>();
-        String sesameServer = "";
-        String repositoryID = "";
-
-        Properties props = new Properties();
-        InputStream fis = null;
-
-        try {
-
-            fis = getClass().getResourceAsStream("/nomothesia.properties");
-            props.load(fis);
-
-            // get the properties values
-            sesameServer = props.getProperty("SesameServer");
-            repositoryID = props.getProperty("SesameRepositoryID");
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // Connect to Sesame
-        Repository repo = new HTTPRepository(sesameServer, repositoryID);
-
-        try {
-            repo.initialize();
-        } catch (RepositoryException ex) {
-            Logger.getLogger(LegalDocumentDAOImpl.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public String getLegislationTypeByYear() throws NomothesiaException {
+        List<LegalDocument> legalviewed = new ArrayList<>();
 
         TupleQueryResult result;
 
         try {
-
-            RepositoryConnection con = repo.getConnection();
-
+            RepositoryConnection con = getSesameConnection();
             try {
-
-                String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                String getTypeYearQuery = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
                         "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
                         "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
                         "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
@@ -2476,60 +2365,47 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                         "ORDER BY DESC(?views)\n" +
                         "LIMIT 10";
 
-                //System.out.println(queryString);
-                TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, queryString);
+                //System.out.println(getTypeYearQuery);
+                TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, getTypeYearQuery);
                 result = tupleQuery.evaluate();
 
                 try {
-
                     // iterate the result set
                     while (result.hasNext()) {
-
                         BindingSet bindingSet = result.next();
-                        // TO DO
+                        // TODO implement
                     }
-
                 } finally {
-                    result.close();
+                    try {
+                        result.close();
+                    } catch (QueryEvaluationException qe) {
+                        throw new NomothesiaException(qe);
+                    }
                 }
-
             } finally {
-                con.close();
+                try {
+                    con.close();
+                } catch (RepositoryException re) {
+                    throw new NomothesiaException(re);
+                }
             }
-
         } catch (OpenRDFException e) {
-            // handle exception
+            throw new NomothesiaException(e);
         }
 
         return "";
-
     }
 
     @Override
-    public List<LegalDocument> getRecent() {
-
-        List<LegalDocument> legalrecent = new ArrayList<LegalDocument>();
-
-        // Connect to Sesame
-        final String sesameServer = applicationProperties.getSesameServer();
-        final String repositoryID = applicationProperties.getSesameRepositoryID();
-        Repository repo = new HTTPRepository(sesameServer, repositoryID);
-
-        try {
-            repo.initialize();
-        } catch (RepositoryException ex) {
-            Logger.getLogger(LegalDocumentDAOImpl.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public List<LegalDocument> getRecent() throws NomothesiaException {
+        List<LegalDocument> legalrecent = new ArrayList<>();
 
         TupleQueryResult result;
 
         try {
-
-            RepositoryConnection con = repo.getConnection();
-
+            RepositoryConnection con = getSesameConnection();
             try {
-
-                String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                String getMostRecentQuery = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
                         "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
                         "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
                         "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
@@ -2550,120 +2426,74 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                         "ORDER BY DESC(?date)\n" +
                         "LIMIT 10";
 
-                //System.out.println(queryString);
-                TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, queryString);
+                //System.out.println(getMostRecentQuery);
+                TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, getMostRecentQuery);
                 result = tupleQuery.evaluate();
 
                 try {
-
                     // iterate the result set
                     while (result.hasNext()) {
-
                         BindingSet bindingSet = result.next();
-                        LegalDocument legald = new LegalDocument();
+                        LegalDocument legalDocument = new LegalDocument();
                         //String[] URIs = bindingSet.getValue("uri").toString().split("uoa.gr/");
-                        legald.setURI(CommonUtils.trimDoubleQuotes(bindingSet.getValue("uri").toString()));
+                        legalDocument.setURI(CommonUtils.trimDoubleQuotes(bindingSet.getValue("uri").toString()));
                         String title = "";
                         if (bindingSet.getValue("title") != null) {
                             title = bindingSet.getValue("title").toString().replace("@el", "");
                         } else {
-                            title = legald.getDecisionType() + "" + legald.getYear() + " " + legald.getId();
+                            title = legalDocument.getDecisionType() + "" + legalDocument.getYear() + " " + legalDocument.getId();
                         }
                         if (title.length() > 200) {
                             title = title.substring(0, 150) + "[...]\"";
                         }
-                        legald.setTitle(CommonUtils.trimDoubleQuotes(title));
+                        legalDocument.setTitle(CommonUtils.trimDoubleQuotes(title));
                         String id = bindingSet.getValue("id").toString().replace("^^", "").replace("\"", "");
-                        legald.setId(CommonUtils.trimDoubleQuotes(id));
+                        legalDocument.setId(CommonUtils.trimDoubleQuotes(id));
                         String date = bindingSet.getValue("date").toString().replace(
                                 "^^<http://www.w3.org/2001/XMLSchema#date>", "");
                         date = CommonUtils.trimDoubleQuotes(date);
-                        legald.setPublicationDate(date);
+                        legalDocument.setPublicationDate(date);
                         String[] year = date.split("-");
-                        legald.setYear(year[0]);
+                        legalDocument.setYear(year[0]);
 
                         String type = bindingSet.getValue("type").toString();
-
-                        if (type.equals(uriBase+ "ontology/Constitution")) {
-                            legald.setDecisionType("con");
-                        } else if (type.equals(uriBase+ "ontology/PresidentialDecree")) {
-                            legald.setDecisionType("pd");
-                        } else if (type.equals(uriBase+ "ontology/Law")) {
-                            legald.setDecisionType("law");
-                        } else if (type.equals(uriBase+ "ontology/ActOfMinisterialCabinet")) {
-                            legald.setDecisionType("amc");
-                        } else if (type.equals(uriBase+ "ontology/MinisterialDecision")) {
-                            legald.setDecisionType("md");
-                        } else if (type.equals(uriBase+ "ontology/RoyalDecree")) {
-                            legald.setDecisionType("rd");
-                        } else if (type.equals(uriBase+ "ontology/LegislativeAct")) {
-                            legald.setDecisionType("la");
-                        } else if (type.equals(uriBase+ "ontology/RegulatoryProvision")) {
-                            legald.setDecisionType("rp");
-                        }
-
-                        legalrecent.add(legald);
-
+                        legalrecent.add(CommonUtils.decideLegalDocumentType(legalDocument, type));
                     }
 
                 } finally {
-                    result.close();
+                    try {
+                        result.close();
+                    } catch (QueryEvaluationException qe) {
+                        throw new NomothesiaException(qe);
+                    }
                 }
 
             } finally {
-                con.close();
+                try {
+                    con.close();
+                } catch (RepositoryException re) {
+                    throw new NomothesiaException(re);
+                }
             }
 
         } catch (OpenRDFException e) {
-            // handle exception
+            throw new NomothesiaException(e);
         }
 
         return legalrecent;
-
     }
 
     @Override
-    public List<GovernmentGazette> getFEKStatistics() {
-
-        List<GovernmentGazette> gazs = new ArrayList<GovernmentGazette>();
-
-        String sesameServer = "";
-        String repositoryID = "";
-        String URI = "";
-        Properties props = new Properties();
-        InputStream fis = null;
-
-        try {
-
-            fis = getClass().getResourceAsStream("/nomothesia.properties");
-            props.load(fis);
-
-            // get the properties values
-            sesameServer = props.getProperty("SesameServer");
-            repositoryID = props.getProperty("SesameRepositoryID");
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // Connect to Sesame
-        Repository repo = new HTTPRepository(sesameServer, repositoryID);
-
-        try {
-            repo.initialize();
-        } catch (RepositoryException ex) {
-            Logger.getLogger(LegalDocumentDAOImpl.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public List<GovernmentGazette> getFEKStatistics() throws NomothesiaException {
+        List<GovernmentGazette> governmentGazetteL = new ArrayList<>();
+        String uri = "";
 
         TupleQueryResult result;
 
         try {
-
-            RepositoryConnection con = repo.getConnection();
-
+            RepositoryConnection con = getSesameConnection();
             try {
-
-                String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                String getFekQuery = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
                         "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
                         "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
                         "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
@@ -2682,156 +2512,98 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                         "GROUP BY ?gaz ?title ?pdf ?doc ?type ?date\n" +
                         "ORDER BY ?gaz";
 
-                //System.out.println(queryString);
-                TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, queryString);
+                //System.out.println(getFekQuery);
+                TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, getFekQuery);
                 result = tupleQuery.evaluate();
-                GovernmentGazette gaz = new GovernmentGazette();
-                ArrayList<LegalDocument> lds = new ArrayList<LegalDocument>();
-                try {
+                GovernmentGazette governmentGazette = new GovernmentGazette();
+                ArrayList<LegalDocument> legalDocumentL = new ArrayList<>();
 
+                try {
                     // iterate the result set
                     while (result.hasNext()) {
                         BindingSet bindingSet = result.next();
-                        if (!URI.equals(bindingSet.getValue("gaz").toString())) {
-                            gaz.setList(lds);
-                            gazs.add(gaz);
-                            gaz = new GovernmentGazette();
-                            lds = new ArrayList<LegalDocument>();
-                            gaz.setURI(bindingSet.getValue("gaz").toString());
+                        if (!uri.equals(bindingSet.getValue("gaz").toString())) {
+                            governmentGazette.setList(legalDocumentL);
+                            governmentGazetteL.add(governmentGazette);
+                            governmentGazette = new GovernmentGazette();
+                            legalDocumentL = new ArrayList<>();
+                            governmentGazette.setURI(bindingSet.getValue("gaz").toString());
                             //gaz.setId(CommonUtils.trimDoubleQuotes(bindingSet.getValue("title").toString().split("^^")[0]).split("\\/")[2]);
-                            URI = gaz.getURI();
+                            uri = governmentGazette.getURI();
                             String title = bindingSet.getValue("title").toString().replace("^^", "");
-                            gaz.setTitle(CommonUtils.trimDoubleQuotes(title));
+                            governmentGazette.setTitle(CommonUtils.trimDoubleQuotes(title));
                             String pdf = bindingSet.getValue("pdf").toString().replace("^^", "");
-                            gaz.setFileName(CommonUtils.trimDoubleQuotes(pdf));
+                            governmentGazette.setFileName(CommonUtils.trimDoubleQuotes(pdf));
                             String date = bindingSet.getValue("date").toString().replace(
                                     "^^<http://www.w3.org/2001/XMLSchema#date>", "");
-                            gaz.setPublicationDate(CommonUtils.trimDoubleQuotes(date));
+                            governmentGazette.setPublicationDate(CommonUtils.trimDoubleQuotes(date));
                             String docs = bindingSet.getValue("docs").toString().replace(
                                     "^^<http://www.w3.org/2001/XMLSchema#integer>", "");
                             if (Integer.parseInt(CommonUtils.trimDoubleQuotes(docs)) != 0) {
-                                gaz.setDocs(1);//Integer.parseInt(CommonUtils.trimDoubleQuotes(docs)));
+                                governmentGazette.setDocs(1);
+                                //Integer.parseInt(CommonUtils.trimDoubleQuotes(docs)));
                             }
                             String issues = bindingSet.getValue("issues").toString().replace(
                                     "^^<http://www.w3.org/2001/XMLSchema#integer>", "");
-                            gaz.setIssues(Integer.parseInt(CommonUtils.trimDoubleQuotes(issues)));
-                            LegalDocument ld = new LegalDocument();
-                            if (gaz.getDocs() != 0) {
+                            governmentGazette.setIssues(Integer.parseInt(CommonUtils.trimDoubleQuotes(issues)));
+                            if (governmentGazette.getDocs() != 0) {
                                 String type = bindingSet.getValue("type").toString();
-                                if (type.equals(uriBase+ "ontology/Constitution")) {
-                                    ld.setDecisionType("con");
-                                } else if (type.equals(uriBase+ "ontology/PresidentialDecree")) {
-                                    ld.setDecisionType("pd");
-                                } else if (type.equals(uriBase+ "ontology/Law")) {
-                                    ld.setDecisionType("law");
-                                } else if (type.equals(uriBase+ "ontology/ActOfMinisterialCabinet")) {
-                                    ld.setDecisionType("amc");
-                                } else if (type.equals(uriBase+ "ontology/MinisterialDecision")) {
-                                    ld.setDecisionType("md");
-                                } else if (type.equals(uriBase+ "ontology/RoyalDecree")) {
-                                    ld.setDecisionType("rd");
-                                } else if (type.equals(uriBase+ "ontology/LegislativeAct")) {
-                                    ld.setDecisionType("la");
-                                } else if (type.equals(uriBase+ "ontology/RegulatoryProvision")) {
-                                    ld.setDecisionType("rp");
-                                }
-                                ld.setURI(bindingSet.getValue("doc").toString());
-                                ld.setId(ld.getURI().split("gr\\/")[1].split("\\/", 2)[1]);
-                                lds.add(ld);
+                                LegalDocument legalDocument = CommonUtils.decideLegalDocumentType(new LegalDocument()
+                                        , type);
+                                legalDocument.setURI(bindingSet.getValue("doc").toString());
+                                legalDocument.setId(legalDocument.getURI().split("gr\\/")[1].split("\\/", 2)[1]);
+                                legalDocumentL.add(legalDocument);
                             }
                         } else {
-                            LegalDocument ld = new LegalDocument();
                             String type = bindingSet.getValue("type").toString();
-                            if (type.equals(uriBase+ "ontology/Constitution")) {
-                                ld.setDecisionType("con");
-                            } else if (type.equals(uriBase+ "ontology/PresidentialDecree")) {
-                                ld.setDecisionType("pd");
-                            } else if (type.equals(uriBase+ "ontology/Law")) {
-                                ld.setDecisionType("law");
-                            } else if (type.equals(uriBase+ "ontology/ActOfMinisterialCabinet")) {
-                                ld.setDecisionType("amc");
-                            } else if (type.equals(uriBase+ "ontology/MinisterialDecision")) {
-                                ld.setDecisionType("md");
-                            } else if (type.equals(uriBase+ "ontology/RoyalDecree")) {
-                                ld.setDecisionType("rd");
-                            } else if (type.equals(uriBase+ "ontology/LegislativeAct")) {
-                                ld.setDecisionType("la");
-                            } else if (type.equals(uriBase+ "ontology/RegulatoryProvision")) {
-                                ld.setDecisionType("rp");
-                            }
-                            gaz.setDocs(gaz.getDocs() + 1);
+                            LegalDocument legalDocument = CommonUtils.decideLegalDocumentType(new LegalDocument()
+                                    , type);
+                            governmentGazette.setDocs(governmentGazette.getDocs() + 1);
                             String issues = bindingSet.getValue("issues").toString().replace(
                                     "^^<http://www.w3.org/2001/XMLSchema#integer>", "");
-                            gaz.setIssues(gaz.getIssues() + Integer.parseInt(CommonUtils.trimDoubleQuotes(issues)));
-                            ld.setURI(bindingSet.getValue("doc").toString());
-                            ld.setId(ld.getURI().split("gr\\/")[1].split("\\/", 2)[1]);
-                            lds.add(ld);
+                            governmentGazette.setIssues(governmentGazette.getIssues() + Integer.parseInt(CommonUtils.trimDoubleQuotes(issues)));
+                            legalDocument.setURI(bindingSet.getValue("doc").toString());
+                            legalDocument.setId(legalDocument.getURI().split("gr\\/")[1].split("\\/", 2)[1]);
+                            legalDocumentL.add(legalDocument);
                         }
                     }
                 } finally {
-                    result.close();
+                    try {
+                        result.close();
+                    } catch (QueryEvaluationException qe) {
+                        throw new NomothesiaException(qe);
+                    }
                 }
-
             } finally {
-                con.close();
+                try{
+                    con.close();
+                } catch (RepositoryException re) {
+                    throw new NomothesiaException(re);
+                }
             }
-
         } catch (OpenRDFException e) {
-            // handle exception
+            throw new NomothesiaException(e);
         }
 
-        gazs.remove(0);
+        governmentGazetteL.remove(0);
         //Collections.sort(gazs, new GGComparator());
-        return gazs;
 
+        return governmentGazetteL;
     }
 
     @Override
-    public List<ArrayList<String>> getStatistics() {
-
-        List<ArrayList<String>> lists = new ArrayList<ArrayList<String>>();
-
-        String[] types =
-                {"PresidentialDecree", "Law", "ActOfMinisterialCabinet", "MinisterialDecision", "RegulatoryProvision",
-                        "LegislativeAct"};
-        String[] years = {"2006", "2007", "2008", "2009", "2010", "2011", "2012", "2013", "2014", "2015"};
-        String sesameServer = "";
-        String repositoryID = "";
-        String URI = "";
-        Properties props = new Properties();
-        InputStream fis = null;
-
-        try {
-
-            fis = getClass().getResourceAsStream("/nomothesia.properties");
-            props.load(fis);
-
-            // get the properties values
-            sesameServer = props.getProperty("SesameServer");
-            repositoryID = props.getProperty("SesameRepositoryID");
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // Connect to Sesame
-        Repository repo = new HTTPRepository(sesameServer, repositoryID);
-
-        try {
-            repo.initialize();
-        } catch (RepositoryException ex) {
-            Logger.getLogger(LegalDocumentDAOImpl.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public List<ArrayList<String>> getStatistics() throws NomothesiaException {
+        List<ArrayList<String>> statistics = new ArrayList<>();
+        List<LegislationTypesEnum> types = Arrays.asList(LegislationTypesEnum.values());
+        List<YearsEnum> yenum = Arrays.asList(YearsEnum.values());
 
         TupleQueryResult result;
 
         try {
-
-            RepositoryConnection con = repo.getConnection();
-
+            RepositoryConnection con = getSesameConnection();
             try {
-                for (int i = 0; i < types.length; i++) {
-                    String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                for (LegislationTypesEnum type: types) {
+                    String getTypeQuery = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
                             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
                             "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
                             "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
@@ -2839,70 +2611,76 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                             "PREFIX dc: <http://purl.org/dc/terms/>\n" +
                             "SELECT (COUNT (?doc) AS ?sum) ?year\n" +
                             "WHERE{\n" +
-                            "?doc rdf:type leg:" + types[i] + ".\n" +
+                            "?doc rdf:type leg:" + type.getType() + ".\n" +
                             "?doc dc:created ?date.\n" +
                             "BIND (year(?date) AS ?year).\n" +
                             "}\n" +
                             "GROUP BY ?year \n" +
                             "ORDER BY ASC(?year)";
 
-                    //System.out.println(queryString);
-                    TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, queryString);
+                    //System.out.println(getTypeQuery);
+                    TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, getTypeQuery);
                     result = tupleQuery.evaluate();
+
                     try {
-                        ArrayList<String> typed = new ArrayList<String>();
+                        ArrayList<String> typed = new ArrayList<>();
                         // iterate the result set
-                        int k = 0;
+                        int yearIndex = 0;
                         while (result.hasNext()) {
                             BindingSet bindingSet = result.next();
                             if (bindingSet.getValue("year") != null) {
                                 while (!CommonUtils.trimDoubleQuotes(bindingSet.getValue("year").toString().replace(
-                                        "^^<http://www.w3.org/2001/XMLSchema#integer>", "")).equals(years[k])) {
+                                        "^^<http://www.w3.org/2001/XMLSchema#integer>", "")).equals(yenum.get(yearIndex).getYear())) {
                                     typed.add("0");
-                                    if (k < years.length - 1) {
-                                        k++;
+                                    if (yearIndex < yenum.size() - 1) {
+                                        yearIndex++;
                                     } else {
                                         break;
                                     }
                                 }
                                 typed.add(CommonUtils.trimDoubleQuotes(bindingSet.getValue("sum").toString().replace(
                                         "^^<http://www.w3.org/2001/XMLSchema#integer>", "")));
-                                k++;
-
+                                yearIndex++;
                             }
                         }
-                        lists.add(typed);
+                        statistics.add(typed);
                     } finally {
-                        result.close();
+                        try {
+                            result.close();
+                        } catch (QueryEvaluationException qe) {
+                            throw new NomothesiaException(qe);
+                        }
                     }
-
                 }
-
             } finally {
-                con.close();
+                try {
+                    con.close();
+                } catch (RepositoryException re) {
+                    throw new NomothesiaException(re);
+                }
             }
-
         } catch (OpenRDFException e) {
-            // handle exception
+            throw new NomothesiaException(e);
         }
 
-
-        ArrayList<String> all = new ArrayList<String>();
+        ArrayList<String> all = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             all.add("0");
         }
+
         //lists.remove(0);
-        for (int i = 0; i < lists.size(); i++) {
-            for (int j = 0; j < lists.get(i).size(); j++) {
-                int sum = Integer.parseInt(all.get(j)) + Integer.parseInt(lists.get(i).get(j));
+
+        for (int i = 0; i < statistics.size(); i++) {
+            for (int j = 0; j < statistics.get(i).size(); j++) {
+                int sum = Integer.parseInt(all.get(j)) + Integer.parseInt(statistics.get(i).get(j));
                 all.set(j, Integer.toString(sum));
             }
         }
-        lists.add(0, all);
+
+        statistics.add(0, all);
 
         //Collections.sort(gazs, new GGComparator());
-        return lists;
-
+        return statistics;
     }
 
     //    // HTTP GET request
@@ -2953,7 +2731,7 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
     //
     //    }
 
-    private RepositoryConnection getSesameConnection() throws NomothesiaException{
+    private RepositoryConnection getSesameConnection() throws NomothesiaException {
         // Connect to Sesame
         try {
             Repository repo = new HTTPRepository(applicationProperties.getSesameServer(), applicationProperties.getSesameRepositoryID());

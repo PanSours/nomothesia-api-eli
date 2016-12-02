@@ -15,6 +15,7 @@ import java.util.Locale;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -91,7 +92,7 @@ public class HomeController {
 
     @RequestMapping (value = "/legislation.owl", method = RequestMethod.GET)
     public void owlDownload(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String filePath = "./resources/datasets/legislation.owl";
+        String filePath = "/resources/datasets/legislation.owl";
         // get absolute path of the application
         //servletContext.contextPath
         ServletContext context = request.getSession().getServletContext();
@@ -130,44 +131,34 @@ public class HomeController {
 
     @RequestMapping (value = "/legislation.n3", method = RequestMethod.GET)
     public void n3Download(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String filePath = "./resources/datasets/legislation.n3";
-
+        String filePath = "/resources/datasets/legislation.n3";
         // get absolute path of the application
         //servletContext.contextPath
         ServletContext context = request.getSession().getServletContext();
         String appPath = context.getRealPath("");
         //System.out.println("appPath = " + appPath);
-
         // construct the complete absolute path of the file
         String fullPath = appPath + filePath;
         File downloadFile = new File(fullPath);
         FileInputStream inputStream = new FileInputStream(downloadFile);
-
         // get MIME type of the file
         String mimeType = context.getMimeType(fullPath);
-
         if (mimeType == null) {
             // set to binary type if MIME mapping not found
             mimeType = "application/octet-stream";
         }
-
         //System.out.println("MIME type: " + mimeType);
-
         // set content attributes for the response
         response.setContentType(mimeType);
         response.setContentLength((int) downloadFile.length());
-
         // set headers for the response
         String headerKey = "Content-Disposition";
         String headerValue = String.format("attachment; filename=\"%s\"", downloadFile.getName());
         response.setHeader(headerKey, headerValue);
-
         // get output stream of the response
         OutputStream outStream = response.getOutputStream();
-
         byte[] buffer = new byte[BUFFER_SIZE];
         int bytesRead = -1;
-
         // write bytes read from the input stream into the output stream
         while ((bytesRead = inputStream.read(buffer)) != -1) {
             outStream.write(buffer, 0, bytesRead);
@@ -175,11 +166,10 @@ public class HomeController {
 
         inputStream.close();
         outStream.close();
-
     }
 
-    @ExceptionHandler (Exception.class)
-    public String handleAllException(Exception ex) {
+    @ExceptionHandler (NomothesiaException.class)
+    public String handleAllException(NomothesiaException ex) {
         return "error";
     }
 

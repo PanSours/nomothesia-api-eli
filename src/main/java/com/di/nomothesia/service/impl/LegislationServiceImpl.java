@@ -17,6 +17,7 @@ import javax.xml.transform.TransformerException;
 
 import com.di.nomothesia.service.LegislationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import static com.di.nomothesia.enums.QueriesEnum.*;
@@ -48,7 +49,7 @@ public class LegislationServiceImpl implements LegislationService {
         return legalDocumentDAO.getAllModifications(type, year, id, date, request);
     }
 
-    //@Cacheable(value="NomothesiaCache", key="#query")
+    @Cacheable (value="NomothesiaCache", key="#query")
     @Override
     public EndpointResultSet sparqlQuery(String query, String format) throws NomothesiaException {
         EndpointResultSet eprs = new EndpointResultSet();
@@ -74,7 +75,7 @@ public class LegislationServiceImpl implements LegislationService {
     }
 
     @Override
-    public String getXMLById(String type, String year, String id, int request) throws TransformerException, NomothesiaException {
+    public String getXMLById(String type, String year, String id, int request) throws NomothesiaException {
         //Get Metadata
         LegalDocument legald = legalDocumentDAO.getMetadataById(type, year, id);
         //Get Citations
@@ -82,7 +83,11 @@ public class LegislationServiceImpl implements LegislationService {
         //Get Legal Document
         legald = legalDocumentDAO.getById(type, year, id, request, legald);
 
-        return xmlBuilder.XMLbuilder(legald);
+        try {
+            return xmlBuilder.XMLbuilder(legald);
+        } catch (TransformerException te) {
+            throw new NomothesiaException(te);
+        }
     }
 
     @Override
@@ -90,16 +95,19 @@ public class LegislationServiceImpl implements LegislationService {
         return legalDocumentDAO.search(params);
     }
 
+    @Cacheable (value="MostViewed")
     @Override
     public List<LegalDocument> mostViewed() throws NomothesiaException {
         return legalDocumentDAO.getViewed();
     }
 
+    @Cacheable (value="MostRecent")
     @Override
     public List<LegalDocument> mostRecent() throws NomothesiaException {
         return legalDocumentDAO.getRecent();
     }
 
+    @Cacheable (value="Tags")
     @Override
     public List<String> getTags() throws NomothesiaException {
         return legalDocumentDAO.getTags();
@@ -111,7 +119,7 @@ public class LegislationServiceImpl implements LegislationService {
     }
 
     @Override
-    public String getUpdatedXMLById(String type, String year, String id, int request) throws TransformerException, NomothesiaException {
+    public String getUpdatedXMLById(String type, String year, String id, int request) throws NomothesiaException {
         //Get Metadata
         LegalDocument legald = legalDocumentDAO.getMetadataById(type, year, id);
         //Get Citations
@@ -124,15 +132,23 @@ public class LegislationServiceImpl implements LegislationService {
         legald.applyModifications(mods);
         // Build XML
         if (!legald.getChapters().isEmpty()) {
-            return xmlBuilder2.XMLbuilder2(legald);
+            try {
+                return xmlBuilder2.XMLbuilder2(legald);
+            } catch (TransformerException te) {
+                throw new NomothesiaException(te);
+            }
         } else {
-            return xmlBuilder.XMLbuilder(legald);
+            try {
+                return xmlBuilder.XMLbuilder(legald);
+            } catch (TransformerException te) {
+                throw new NomothesiaException(te);
+            }
         }
     }
 
     @Override
     public String getUpdatedXMLByIdDate(String type, String year, String id, int request,
-                                        String date) throws TransformerException, NomothesiaException {
+                                        String date) throws NomothesiaException {
         //Get Metadata
         LegalDocument legald = legalDocumentDAO.getMetadataById(type, year, id);
         //Get Citations
@@ -145,17 +161,27 @@ public class LegislationServiceImpl implements LegislationService {
         legald.applyModifications(mods);
         // Build XML
         if (!legald.getChapters().isEmpty()) {
-            return xmlBuilder2.XMLbuilder2(legald);
+            try {
+                return xmlBuilder2.XMLbuilder2(legald);
+            } catch (TransformerException te) {
+                throw new NomothesiaException(te);
+            }
         } else {
-            return xmlBuilder.XMLbuilder(legald);
+            try {
+                return xmlBuilder.XMLbuilder(legald);
+            } catch (TransformerException te) {
+                throw new NomothesiaException(te);
+            }
         }
     }
 
+    @Cacheable (value="FekStats")
     @Override
     public List<GovernmentGazette> getFEKStatistics() throws NomothesiaException {
         return legalDocumentDAO.getFEKStatistics();
     }
 
+    @Cacheable (value="Stats")
     @Override
     public List<ArrayList<String>> getStats() throws NomothesiaException {
         return legalDocumentDAO.getStatistics();

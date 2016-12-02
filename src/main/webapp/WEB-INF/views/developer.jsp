@@ -8,7 +8,6 @@
 
 <!DOCTYPE html>
 <html lang="en">
-
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -17,24 +16,21 @@
         <title><spring:message code="title.info"/></title>
 
         <!-- Bootstrap -->
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
-        <link href='http://fonts.googleapis.com/css?family=Jura&subset=latin,greek' rel='stylesheet' type='text/css'>
-        <link href='http://fonts.googleapis.com/css?family=Comfortaa&subset=latin,greek' rel='stylesheet' type='text/css'>
-        <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/plug-ins/3cfcc339e89/integration/bootstrap/3/dataTables.bootstrap.css">
+        <link rel="stylesheet" href="/resources/css/bootstrap.min.css" type='text/css'>
+        <link rel="stylesheet" href="/resources/css/bootstrap-theme.min.css" type='text/css'>
+        <link rel='stylesheet' href='/resources/css/jura.css' type='text/css'>
+        <link rel='stylesheet' href='/resources/css/comfortaa.css' type='text/css'>
+        <link rel="stylesheet" href="/resources/css/dataTables.bootstrap.css" type="text/css">
 
         <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
         <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
         <!--[if lt IE 9]>
-        <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-        <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+        <script src="/resources/js/html5shiv.min.js"></script>
+        <script src="/resources/js/respond.min.js"></script>
         <![endif]-->
 
         <!-- Load CSS -->
         <link href="/resources/css/navbar.css" rel="stylesheet"/>
-
-        <!-- jQueryUI Calendar-->
-        <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>  
 
         <style>
             #footer {
@@ -43,69 +39,12 @@
                 width:100%;
                 height:60px;   /* Height of the footer */
             }
-        </style>    
-
+        </style>
     </head>
+
     <body>
-
-        <!-- Navigation Bar -->
-        <div id="custom-bootstrap-menu" class="navbar navbar-default " role="navigation">
-            <div class="container-fluid">
-                <div class="navbar-header">
-                    <a class="navbar-brand"  href="/">
-                        <img style="height: 40px; margin-top: -10px;" src="/resources/images/logo.png"></a>
-                    <a class="navbar-brand"  href="/" style="font-family:'Jura'; font-size: 33px"><spring:message code="navbar.brand"/></a>
-                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-menubuilder">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                </div>
-
-                <div class="collapse navbar-collapse navbar-menubuilder">
-                    <ul class="nav navbar-nav navbar-left">
-                        <li>
-                            <a href="/" style="font-family: 'Comfortaa', cursive;"><spring:message code="navbar.home"/></a>
-                        </li>
-                        <li>
-                            <a href="/search" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.search"/></a>
-                        </li>
-                        <li>
-                            <a href="/endpoint" style="font-family: 'Comfortaa', cursive;" >Endpoint</a>
-                        </li>
-                        <li>
-                            <a href="/statistics" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.statistics"/></a>
-                        </li>
-                        <li>
-                            <a href="/aboutus" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.aboutus"/></a>
-                        </li>
-                        <li>
-                            <a href="/developer" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.info"/></a>
-                        </li>
-                        <li>
-                            <a href="/gazette" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.gazette"/></a>
-                        </li>
-                    </ul>
-
-                    <ul class="nav navbar-nav navbar-right">
-                        <c:set var="localeCode" value="${pageContext.response.locale}" />
-                        <c:choose>
-                            <c:when test="${localeCode == 'en' }"> 
-                                <li>
-                                    <a href="?language=el_GR" style="font-family: 'Comfortaa', cursive;">EL</a>
-                                </li>
-                            </c:when>
-                            <c:when test="${localeCode == 'el_GR' }">
-                                <li>
-                                    <a href="?language=en" style="font-family: 'Comfortaa', cursive;">EN</a>
-                                </li>
-                            </c:when>
-                        </c:choose>
-                    </ul>
-                </div>
-            </div>
-        </div>
+        <!-- Include Navbar -->
+        <%@ include file="/resources/base/navbar.html"%>
 
         <!-- Tabs -->
         <div class="container">
@@ -120,18 +59,15 @@
                                 <li role="presentation"><a href="#legislation" aria-controls="profile" role="tab" data-toggle="tab" style="font-family: 'Comfortaa', cursive;"><spring:message code="developer.legr"/></a></li>
                                 <li role="presentation"><a href="#uris" aria-controls="profile" role="tab" data-toggle="tab" style="font-family: 'Comfortaa', cursive;"><spring:message code="developer.uri"/></a></li>
                                 <li role="presentation"><a href="#restservices" aria-controls="profile" role="tab" data-toggle="tab" style="font-family: 'Comfortaa', cursive;"><spring:message code="developer.rest"/></a></li>
-
                             </ul>
 
                             <!-- Tab panes -->
                             <div class="tab-content" style="text-align:justify;">
                                 <div role="tabpanel" style="text-align: center;" class="tab-pane fade in active" id="introduction">
                                     <br/>
-                                        <tr>
-                                        <iframe src="https://www.slideshare.net/slideshow/embed_code/key/EDBgLLvuH1Hxdb" width="900" height="500" frameborder="0" marginwidth="0" marginheight="0" scrolling="no"></iframe>
-                                        <br/>
-                                        <br/>
-                                        
+                                    <iframe src="https://www.slideshare.net/slideshow/embed_code/key/EDBgLLvuH1Hxdb" width="900" height="500" frameborder="0" marginwidth="0" marginheight="0" scrolling="no"></iframe>
+                                    <br/>
+                                    <br/>
                                 </div>
                                 <div role="tabpanel" class="tab-pane fade" id="background">
                                     <br/>
@@ -156,18 +92,12 @@
             </div>
         </div>
 
-        <div id="footer" style="text-align: center; font-family:'Jura';" >
-            <h5><spring:message code="footer"/> - Open Data&#160;&#160; <img src="/resources/images/rdf.png" width="15"/> </h5>
-        </div>
+        <!-- Include Footer -->
+        <%@ include file="/resources/base/footer.html"%>
 
         <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <script src="/resources/js/jquery.min.js"></script>
         <!-- Include all compiled plugins (below), or include individual files as needed -->
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
-        <script src="//code.jquery.com/jquery-1.10.2.js"></script>
-        <script src="//code.jquery.com/ui/1.11.2/jquery-ui.js"></script>
-        <script type="text/javascript" language="javascript" src="//cdn.datatables.net/1.10.4/js/jquery.dataTables.min.js"></script>
-        <script type="text/javascript" language="javascript" src="//cdn.datatables.net/plug-ins/3cfcc339e89/integration/bootstrap/3/dataTables.bootstrap.js"></script>
-
+        <script src="/resources/js/bootstrap.min.js"></script>
     </body>
 </html>

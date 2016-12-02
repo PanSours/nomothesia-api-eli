@@ -63,9 +63,8 @@ public interface LegislationService {
      * @param id      the id
      * @param request the request
      * @return String
-     * @throws TransformerException
      */
-    String getXMLById(String type, String year, String id, int request) throws TransformerException, NomothesiaException;
+    String getXMLById(String type, String year, String id, int request) throws NomothesiaException;
 
     /**
      * Get list of legal documents based on params.
@@ -113,9 +112,8 @@ public interface LegislationService {
      * @param id      the id
      * @param request the request
      * @return String
-     * @throws TransformerException
      */
-    String getUpdatedXMLById(String type, String year, String id, int request) throws TransformerException, NomothesiaException;
+    String getUpdatedXMLById(String type, String year, String id, int request) throws NomothesiaException;
 
     /**
      * Get latest version of legal document in xml by id and date.
@@ -126,10 +124,8 @@ public interface LegislationService {
      * @param request the request
      * @param date    the date
      * @return String
-     * @throws TransformerException
      */
-    String getUpdatedXMLByIdDate(String type, String year, String id, int request, String date) throws
-            TransformerException, NomothesiaException;
+    String getUpdatedXMLByIdDate(String type, String year, String id, int request, String date) throws NomothesiaException;
 
     /**
      * Get fek statistics.
