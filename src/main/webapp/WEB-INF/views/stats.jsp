@@ -35,9 +35,6 @@
         <!-- Load CSS -->
         <link href="/resources/css/navbar.css" rel="stylesheet"/>
 
-        <!-- jQueryUI Calendar-->
-        <link rel="stylesheet" href="/resources/css/jquery-ui.css" type='text/css'>
-
         <c:set var="localeCode2" value="${pageContext.response.locale}"/>
 
         <script type="text/javascript">
@@ -154,7 +151,7 @@
             <!-- Include Stats Bar -->
             <%@ include file="/resources/base/statsbar.html"%>
 
-            <div style="font-family: 'Comfortaa', cursive; text-align: justify; font-size: 15px;"><spring:message code="stats.comment3"/></div>
+            <div style="font-family: 'Comfortaa', cursive; text-align: center; font-size: 15px;"><spring:message code="stats.comment3"/></div>
         </div>
 
         <!-- Include Footer -->

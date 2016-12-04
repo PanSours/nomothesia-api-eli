@@ -34,6 +34,7 @@ public class LegislationServiceImpl implements LegislationService {
     @Autowired
     XMLBuilder2 xmlBuilder2;
 
+    @Cacheable (value="NomothesiaCache", key="{#decisionType, #year, #id, #request}")
     @Override
     public LegalDocument getById(String decisionType, String year, String id, int request) throws NomothesiaException {
         //Get Metadata
@@ -90,6 +91,7 @@ public class LegislationServiceImpl implements LegislationService {
         }
     }
 
+    @Cacheable (value="SearchResults", key="#params")
     @Override
     public List<LegalDocument> searchLegislation(Map<String, String> params) throws NomothesiaException {
         return legalDocumentDAO.search(params);

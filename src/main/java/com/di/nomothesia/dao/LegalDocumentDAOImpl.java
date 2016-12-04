@@ -20,6 +20,7 @@ import com.di.nomothesia.model.Passage;
 import com.di.nomothesia.model.Signer;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -27,6 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.di.nomothesia.util.CommonUtils;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.openrdf.OpenRDFException;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.MalformedQueryException;
@@ -65,17 +67,21 @@ import org.openrdf.query.Update;
 import org.openrdf.query.resultio.sparqlxml.SPARQLResultsXMLWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 //import org.openrdf.query.resultio.stSPARQLQueryResultFormat;
 //import eu.earthobservatory.org.StrabonEndpoint.client.*;
 
 @Service
 public class LegalDocumentDAOImpl implements LegalDocumentDAO {
-    @Autowired
-    AppConfig.ApplicationProperties applicationProperties;
 
     //TODO: make this dynamic
-    private final String uriBase = "http://legislation.di.uoa.gr/";
+    private final static String uriBase = "http://legislation.di.uoa.gr/";
+
+    @Autowired
+    AppConfig.ApplicationProperties applicationProperties;
 
     @Override
     public LegalDocument getMetadataById(String decisionType, String year, String id) throws NomothesiaException {
@@ -121,45 +127,41 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
             TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, generalQuery);
             result = tupleQuery.evaluate();
 
-            try {
-                //int flag = 0;
-                // iterate the result set
-                while (result.hasNext()) {
-                    BindingSet bindingSet = result.next();
-                    //Signer sign = new Signer();
-                    legald.setURI(uriBase + decisionType + "/" + year + "/" + id);
-                    String title_el = "";
-                    if (bindingSet.hasBinding("title")) {
-                        title_el = bindingSet.getValue("title").toString().replace("@el", "");
-                    } else {
-                        title_el = legald.getDecisionType() + "" + legald.getYear() + " " + legald.getId();
-                    }
-                    if (bindingSet.hasBinding("htmltitle")) {
-                        title_el = bindingSet.getValue("htmltitle").toString().split("\\^\\^", 2)[0];
-                    }
-                    legald.setTitle(CommonUtils.trimDoubleQuotes(title_el));
-                    String date2 =
-                            bindingSet.getValue("date").toString().replace("^^<http://www.w3.org/2001/XMLSchema#date>",
-                                                                           "");
-                    legald.setPublicationDate(CommonUtils.trimDoubleQuotes(date2));
-                    String fek = bindingSet.getValue("gaztitle").toString().replace("^^", "");
-                    legald.setFEK(CommonUtils.trimDoubleQuotes(fek));
-                    //String fekfile = bindingSet.getValue("pdfile").toString().replace("^^","");
-                    //legald.setFEKfile(CommonUtils.trimDoubleQuotes(fekfile));
-                    String views = bindingSet.getValue("views").toString().replace(
-                            "^^<http://www.w3.org/2001/XMLSchema#integer>", "");
-                    legald.setViews(CommonUtils.trimDoubleQuotes(views));
-
-                    /*if((flag ==0) &&(bindingSet.hasBinding("place"))){
-                        flag = 1;
-                        legald.setPlace(this.getKML(bindingSet.getValue("place").toString()));
-                    }*/
+            //int flag = 0;
+            // iterate the result set
+            while (result.hasNext()) {
+                BindingSet bindingSet = result.next();
+                //Signer sign = new Signer();
+                legald.setURI(uriBase + decisionType + "/" + year + "/" + id);
+                String title_el = "";
+                if (bindingSet.hasBinding("title")) {
+                    title_el = bindingSet.getValue("title").toString().replace("@el", "");
+                } else {
+                    title_el = legald.getDecisionType() + "" + legald.getYear() + " " + legald.getId();
                 }
-            } catch (Exception ex) {
-                throw new NomothesiaException(ex);
-            } finally {
-                result.close();
+                if (bindingSet.hasBinding("htmltitle")) {
+                    title_el = bindingSet.getValue("htmltitle").toString().split("\\^\\^", 2)[0];
+                }
+                legald.setTitle(CommonUtils.trimDoubleQuotes(title_el));
+                String date2 =
+                        bindingSet.getValue("date").toString().replace("^^<http://www.w3.org/2001/XMLSchema#date>",
+                                "");
+                legald.setPublicationDate(CommonUtils.trimDoubleQuotes(date2));
+                String fek = bindingSet.getValue("gaztitle").toString().replace("^^", "");
+                legald.setFEK(CommonUtils.trimDoubleQuotes(fek));
+                //String fekfile = bindingSet.getValue("pdfile").toString().replace("^^","");
+                //legald.setFEKfile(CommonUtils.trimDoubleQuotes(fekfile));
+                String views = bindingSet.getValue("views").toString().replace(
+                        "^^<http://www.w3.org/2001/XMLSchema#integer>", "");
+                legald.setViews(CommonUtils.trimDoubleQuotes(views));
+
+                /*if((flag ==0) &&(bindingSet.hasBinding("place"))){
+                    flag = 1;
+                    legald.setPlace(this.getKML(bindingSet.getValue("place").toString()));
+                }*/
             }
+
+            result.close();
 
             //GET TAGS
             String getTagsQuery = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
@@ -167,7 +169,7 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                     "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
                     "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
                     "PREFIX metalex:<http://www.metalex.eu/metalex/2008-05-02#>\n" +
-                    "PREFIX leg: <" + uriBase  + "ontology/>\n" +
+                    "PREFIX leg: <" + uriBase + "ontology/>\n" +
                     "PREFIX dc: <http://purl.org/dc/terms/>\n" +
                     "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n" +
                     "\n" +
@@ -182,18 +184,14 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
             TupleQuery tupleQuery2 = con.prepareTupleQuery(QueryLanguage.SPARQL, getTagsQuery);
             result = tupleQuery2.evaluate();
 
-            try {
-                // iterate the result set
-                while (result.hasNext()) {
-                    BindingSet bindingSet = result.next();
-                    String tag_el = bindingSet.getValue("tag").toString().replace("@el", "");
-                    legald.getTags().add(CommonUtils.trimDoubleQuotes(tag_el));
-                }
-            } catch (Exception ex) {
-                throw new NomothesiaException(ex);
-            } finally {
-                result.close();
+            // iterate the result set
+            while (result.hasNext()) {
+                BindingSet bindingSet = result.next();
+                String tag_el = bindingSet.getValue("tag").toString().replace("@el", "");
+                legald.getTags().add(CommonUtils.trimDoubleQuotes(tag_el));
             }
+
+            result.close();
 
             //GET SIGNERS
             String getSingersQuery = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
@@ -201,7 +199,7 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                     "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
                     "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
                     "PREFIX metalex:<http://www.metalex.eu/metalex/2008-05-02#>\n" +
-                    "PREFIX leg: <" + uriBase  + "ontology/>\n" +
+                    "PREFIX leg: <" + uriBase + "ontology/>\n" +
                     "PREFIX dc: <http://purl.org/dc/terms/>\n" +
                     "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n" +
                     "\n" +
@@ -219,25 +217,21 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
             TupleQuery tupleQuery3 = con.prepareTupleQuery(QueryLanguage.SPARQL, getSingersQuery);
             result = tupleQuery3.evaluate();
 
-            try {
-                // iterate the result set
-                while (result.hasNext()) {
-                    BindingSet bindingSet = result.next();
-                    Signer sign = new Signer();
-                    String name_el = bindingSet.getValue("signername").toString().replace("@el", "");
-                    if (bindingSet.getValue("html") != null) {
-                        name_el = bindingSet.getValue("html").toString().split("\\^\\^", 2)[0];
-                    }
-                    sign.setFullName(CommonUtils.trimDoubleQuotes(name_el));
-                    //String signer_el = bindingSet.getValue("signertitle").toString().replace("@el", "");
-                    //sign.setTitle(CommonUtils.trimDoubleQuotes(signer_el));
-                    legald.getSigners().add(sign);
+            // iterate the result set
+            while (result.hasNext()) {
+                BindingSet bindingSet = result.next();
+                Signer sign = new Signer();
+                String name_el = bindingSet.getValue("signername").toString().replace("@el", "");
+                if (bindingSet.getValue("html") != null) {
+                    name_el = bindingSet.getValue("html").toString().split("\\^\\^", 2)[0];
                 }
-            } catch (Exception ex) {
-                throw new NomothesiaException(ex);
-            } finally {
-                result.close();
+                sign.setFullName(CommonUtils.trimDoubleQuotes(name_el));
+                //String signer_el = bindingSet.getValue("signertitle").toString().replace("@el", "");
+                //sign.setTitle(CommonUtils.trimDoubleQuotes(signer_el));
+                legald.getSigners().add(sign);
             }
+
+            result.close();
 
             /*try {
                 int views = Integer.parseInt(legald.getViews()) + 1;
@@ -264,107 +258,95 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
     }
 
     @Override
-    public LegalDocument getCitationsById(String decisionType, String year, String id, int req, LegalDocument legald)
-            throws NomothesiaException {
+    public LegalDocument getCitationsById(String decisionType, String year, String id, int req, LegalDocument legald) throws NomothesiaException {
         //LegalDocument legald = this.getMetadataById(decisionType, year, id);
-
-        // Connect to Sesame
-        Repository repo = new HTTPRepository(applicationProperties.getSesameServer(), applicationProperties.getSesameRepositoryID());
-        try {
-            repo.initialize();
-        } catch (RepositoryException ex) {
-            throw new NomothesiaException(ex);
-        }
 
         TupleQueryResult result = null;
 
         try {
-            RepositoryConnection con = repo.getConnection();
-            try {
-                String getCitationsQuery = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
-                        "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
-                        "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
-                        "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
-                        "PREFIX metalex:<http://www.metalex.eu/metalex/2008-05-02#>\n" +
-                        "PREFIX leg: <" + uriBase  + "ontology/>\n" +
-                        "PREFIX dc: <http://purl.org/dc/terms/>\n" +
-                        "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n" +
-                        "\n" +
-                        "SELECT  DISTINCT ?citation ?cittext ?cituri ?cithtml\n" +
-                        "WHERE{\n" +
-                        "<" + uriBase + decisionType + "/" + year + "/" + id +
-                        "> metalex:part ?citation.\n" +
-                        "?citation a metalex:BibliographicCitation.\n" +
-                        "?citation leg:context ?cittext.\n" +
-                        "OPTIONAL {?citation metalex:cites ?cituri.}.\n" +
-                        "OPTIONAL {?citation leg:html ?cithtml.}\n";
+            RepositoryConnection con = getSesameConnection();
+            String getCitationsQuery = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                    "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                    "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
+                    "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
+                    "PREFIX metalex:<http://www.metalex.eu/metalex/2008-05-02#>\n" +
+                    "PREFIX leg: <" + uriBase + "ontology/>\n" +
+                    "PREFIX dc: <http://purl.org/dc/terms/>\n" +
+                    "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n" +
+                    "\n" +
+                    "SELECT  DISTINCT ?citation ?cittext ?cituri ?cithtml\n" +
+                    "WHERE{\n" +
+                    "<" + uriBase + decisionType + "/" + year + "/" + id +
+                    "> metalex:part ?citation.\n" +
+                    "?citation a metalex:BibliographicCitation.\n" +
+                    "?citation leg:context ?cittext.\n" +
+                    "OPTIONAL {?citation metalex:cites ?cituri.}.\n" +
+                    "OPTIONAL {?citation leg:html ?cithtml.}\n";
 
-                if (req == 1) {
-                    getCitationsQuery += "}";
-                } else if (req == 2) {
-                    getCitationsQuery += "FILTER(langMatches(lang(?cittext), \"el\"))\n" +
-                            "}";
-                }
+            if (req == 1) {
+                getCitationsQuery += "}";
+            } else if (req == 2) {
+                getCitationsQuery += "FILTER(langMatches(lang(?cittext), \"el\"))\n" +
+                        "}";
+            }
 
-                //System.out.println(getCitationsQuery);
-                TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, getCitationsQuery);
-                result = tupleQuery.evaluate();
-                int cid = 1;
-                String old2 = "old2";
-                String old = "old";
-                String current = "current";
+            //System.out.println(getCitationsQuery);
+            TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, getCitationsQuery);
+            result = tupleQuery.evaluate();
+            int cid = 1;
+            String old2 = "old2";
+            String old = "old";
+            String current = "current";
 
-                // iterate the result set
-                while (result.hasNext()) {
-                    BindingSet bindingSet = result.next();
-                    current = CommonUtils.trimDoubleQuotes(bindingSet.getValue("citation").toString());
+            // iterate the result set
+            while (result.hasNext()) {
+                BindingSet bindingSet = result.next();
+                current = CommonUtils.trimDoubleQuotes(bindingSet.getValue("citation").toString());
 
-                    if (current.equals(old)) {
-                        if (bindingSet.getValue("cituri") != null) {
-                            if (old2.equals(bindingSet.getValue("cittext").toString()) &&
-                                    !bindingSet.getValue("cittext").toString().contains("@html")) {
-                                Citation cit = new Citation();
-                                cit = legald.getCitations().get(cid - 2);
-                                cit.gettargetURIs().add(CommonUtils.trimDoubleQuotes(bindingSet.getValue("cituri").toString()));
-                            }
-
-                            old = current;
-                            old2 = bindingSet.getValue("cittext").toString();
-                        }
-                    } else {
-                        Citation cit = new Citation();
-                        cit.setURI(CommonUtils.trimDoubleQuotes(bindingSet.getValue("citation").toString()));
-
-                        if (bindingSet.getValue("cituri") != null) {
+                if (current.equals(old)) {
+                    if (bindingSet.getValue("cituri") != null) {
+                        if (old2.equals(bindingSet.getValue("cittext").toString()) &&
+                                !bindingSet.getValue("cittext").toString().contains("@html")) {
+                            Citation cit = new Citation();
+                            cit = legald.getCitations().get(cid - 2);
                             cit.gettargetURIs().add(CommonUtils.trimDoubleQuotes(bindingSet.getValue("cituri").toString()));
                         }
 
-                        if (bindingSet.getValue("cittext").toString().contains("@html")) {
-                            String text = bindingSet.getValue("cittext").toString().replace("@html", "");
-                            cit.setDescription(CommonUtils.trimDoubleQuotes(text));
-                        } else if (bindingSet.getValue("cittext").toString().contains("@el")) {
-                            String text = bindingSet.getValue("cittext").toString().replace("@el", "");
-                            cit.setDescription(CommonUtils.trimDoubleQuotes(text));
-                        }
-
-                        if (bindingSet.getValue("cithtml") != null) {
-                            String text = bindingSet.getValue("cithtml").toString().split("\\^\\^", 2)[0];
-                            cit.setDescription(CommonUtils.trimDoubleQuotes(text));
-                        }
-
-                        cit.setId(cid);
-                        cid++;
-                        legald.getCitations().add(cit);
                         old = current;
                         old2 = bindingSet.getValue("cittext").toString();
                     }
+                } else {
+                    Citation cit = new Citation();
+                    cit.setURI(CommonUtils.trimDoubleQuotes(bindingSet.getValue("citation").toString()));
+
+                    if (bindingSet.getValue("cituri") != null) {
+                        cit.gettargetURIs().add(CommonUtils.trimDoubleQuotes(bindingSet.getValue("cituri").toString()));
+                    }
+
+                    if (bindingSet.getValue("cittext").toString().contains("@html")) {
+                        String text = bindingSet.getValue("cittext").toString().replace("@html", "");
+                        cit.setDescription(CommonUtils.trimDoubleQuotes(text));
+                    } else if (bindingSet.getValue("cittext").toString().contains("@el")) {
+                        String text = bindingSet.getValue("cittext").toString().replace("@el", "");
+                        cit.setDescription(CommonUtils.trimDoubleQuotes(text));
+                    }
+
+                    if (bindingSet.getValue("cithtml") != null) {
+                        String text = bindingSet.getValue("cithtml").toString().split("\\^\\^", 2)[0];
+                        cit.setDescription(CommonUtils.trimDoubleQuotes(text));
+                    }
+
+                    cit.setId(cid);
+                    cid++;
+                    legald.getCitations().add(cit);
+                    old = current;
+                    old2 = bindingSet.getValue("cittext").toString();
                 }
-            } catch (Exception ex) {
-                throw new NomothesiaException(ex);
-            } finally {
-                result.close();
-                con.close();
             }
+
+            result.close();
+            con.close();
+
         } catch (OpenRDFException e) {
             throw new NomothesiaException(e);
         }
@@ -382,28 +364,18 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
     }
 
     @Override
-    public LegalDocument getById(String decisionType, String year, String id, int req, LegalDocument legald) throws
-            NomothesiaException{
-
-        // Connect to Sesame
-        Repository repo = new HTTPRepository(applicationProperties.getSesameServer(), applicationProperties.getSesameRepositoryID());
-        try {
-            repo.initialize();
-        } catch (RepositoryException ex) {
-            throw new NomothesiaException(ex);
-        }
-
+    public LegalDocument getById(String decisionType, String year, String id, int req, LegalDocument legald) throws NomothesiaException {
         TupleQueryResult result;
 
         try {
-            RepositoryConnection con = repo.getConnection();
+            RepositoryConnection con = getSesameConnection();
             try {
                 String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
                         "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
                         "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
                         "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
                         "PREFIX metalex:<http://www.metalex.eu/metalex/2008-05-02#>\n" +
-                        "PREFIX leg: <" + uriBase  + "ontology/>\n" +
+                        "PREFIX leg: <" + uriBase + "ontology/>\n" +
                         "PREFIX dc: <http://purl.org/dc/terms/>\n" +
                         "\n" +
                         "SELECT DISTINCT ?part ?text ?html ?type ?title ?filename\n" +
@@ -1136,7 +1108,7 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
 
                             }
 
-                        } else if (bindingSet.getValue("type").toString().equals(uriBase+ "ontology/Table")) {
+                        } else if (bindingSet.getValue("type").toString().equals(uriBase + "ontology/Table")) {
 
                             String table = bindingSet.getValue("text").toString().replace("@html", "");
                             //System.out.println(bindingSet.getValue("part").toString());
@@ -1537,7 +1509,6 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                         }
 
                     }
-
                 } finally {
                     result.close();
                 }
@@ -1589,7 +1560,7 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
             }
 
         } catch (OpenRDFException e) {
-            // handle exception
+            throw new NomothesiaException(e);
         }
 
         //sort containts of legald before displayiing it
@@ -1597,7 +1568,6 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
 
         //getHTMLById(decisionType, year, id, legald);
         return srt.sortld(legald);
-
     }
 
     @Override
@@ -2071,16 +2041,21 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
     }
 
     @Override
-    public List<LegalDocument> search(Map<String, String> params) {
-        List<LegalDocument> LDs = new ArrayList<LegalDocument>();
+    public List<LegalDocument> search(Map<String, String> params) throws NomothesiaException {
+        List<LegalDocument> legalDocumentL = new ArrayList<>();
         //Apache Lucene searching via criteria
         try {
-            Path path = Paths.get(
-                    "/storage/nomothesia/apache-tomcat-7.0.61/webapps/nomothesia-1.0.0/WEB-INF/classes/fek_index");//home/kiddo/NetBeansProjects/nomothesia-api/src/main/resources/fek_index");//getClass().getResource("/fek_index").toString());
-            Directory directory2 = FSDirectory.open(path);
-            IndexReader indexReader = DirectoryReader.open(directory2);
+            Path path = Paths.get("/resources/fek_index");
+            //home/kiddo/NetBeansProjects/nomothesia-api/src/main/resources/fek_index");//getClass().getResource("/fek_index").toString());
+            File file = new File("resources/fek_index");
+            String absolutePath = file.getAbsolutePath();
+
+
+            Directory directory = FSDirectory.open(path);
+            IndexReader indexReader = DirectoryReader.open(directory);
             IndexSearcher indexSearcher = new IndexSearcher(indexReader);
             BooleanQuery finalQuery = new BooleanQuery();
+
             if (params.get("keywords") != null && !params.get("keywords").isEmpty()) {
                 if (params.get("keywords").contains(",")) {
                     BooleanQuery multipleKeyWords = new BooleanQuery();
@@ -2091,6 +2066,7 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                         Query query = queryParser.parse("\"" + keyword.trim() + "\"~");
                         multipleKeyWords.add(query, Occur.SHOULD);
                     }
+
                     finalQuery.add(multipleKeyWords, Occur.MUST);
                 }
                 if (params.get("keywords").contains(" ")) {
@@ -2102,6 +2078,7 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                         Query query = queryParser.parse("\"" + keyword.trim() + "\"~");
                         multipleKeyWords.add(query, Occur.SHOULD);
                     }
+
                     finalQuery.add(multipleKeyWords, Occur.MUST);
                 } else {
                     QueryParser queryParser = new QueryParser("text", new StandardAnalyzer());
@@ -2110,21 +2087,18 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                 }
             }
             if (params.get("year") != null && !params.get("year").isEmpty()) {
-                Query query2 = NumericRangeQuery.newIntRange("year", 1, Integer.parseInt(params.get("year")),
-                                                             Integer.parseInt(params.get("year")), true,
-                                                             true);//queryParser2.parse(params.get("year"));
+                Query query2 = NumericRangeQuery.newIntRange("year", 1, Integer.parseInt(params.get("year")), Integer.parseInt(params.get("year")), true, true);
+                //queryParser2.parse(params.get("year"));
                 finalQuery.add(query2, Occur.MUST);
             }
             if (params.get("fek_year") != null && !params.get("fek_year").isEmpty()) {
-                Query query3 = NumericRangeQuery.newIntRange("year", 1, Integer.parseInt(params.get("fek_year")),
-                                                             Integer.parseInt(params.get("fek_year")), true,
-                                                             true);//queryParser3.parse(params.get("fek_year"));
+                Query query3 = NumericRangeQuery.newIntRange("year", 1, Integer.parseInt(params.get("fek_year")), Integer.parseInt(params.get("fek_year")), true, true);
+                //queryParser3.parse(params.get("fek_year"));
                 finalQuery.add(query3, Occur.MUST);
             }
             if (params.get("fek_id") != null && !params.get("fek_id").isEmpty()) {
-                Query query4 = NumericRangeQuery.newIntRange("fek_id", 1, Integer.parseInt(params.get("fek_id")),
-                                                             Integer.parseInt(params.get("fek_id")), true,
-                                                             true);//queryParser4.parse(params.get("fek_id"));
+                Query query4 = NumericRangeQuery.newIntRange("fek_id", 1, Integer.parseInt(params.get("fek_id")), Integer.parseInt(params.get("fek_id")), true, true);
+                //queryParser4.parse(params.get("fek_id"));
                 finalQuery.add(query4, Occur.MUST);
             }
             if (params.get("type") != null && !params.get("type").isEmpty()) {
@@ -2135,6 +2109,7 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                     for (String type : types) {
                         multipleTypes.add(new TermQuery(new Term("type", type)), Occur.SHOULD);
                     }
+
                     finalQuery.add(multipleTypes, Occur.MUST);
                 } else {
                     QueryParser queryParser5 = new QueryParser("type", new StandardAnalyzer());
@@ -2143,53 +2118,48 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                 }
             }
             if (params.get("id") != null && !params.get("id").isEmpty()) {
-                Query query6 = NumericRangeQuery.newLongRange("numeric_id", 1, Long.parseLong(params.get("id")),
-                                                              Long.parseLong(params.get("id")), true,
-                                                              true);//queryParser6.parse(params.get("id"));
+                Query query6 = NumericRangeQuery.newLongRange("numeric_id", 1, Long.parseLong(params.get("id")), Long.parseLong(params.get("id")), true, true);
+                //queryParser6.parse(params.get("id"));
                 finalQuery.add(query6, Occur.MUST);
             }
             if (params.get("date") != null && !params.get("date").isEmpty()) {
                 Query query6 =
-                        NumericRangeQuery.newIntRange("date", 1, Integer.parseInt(params.get("date").replace("-", "")),
-                                                      Integer.parseInt(params.get("date").replace("-", "")), true,
-                                                      true);//queryParser6.parse(params.get("id"));
+                        NumericRangeQuery.newIntRange("date", 1, Integer.parseInt(params.get("date").replace("-", "")), Integer.parseInt(params.get("date").replace("-", "")), true, true);
+                //queryParser6.parse(params.get("id"));
                 finalQuery.add(query6, Occur.MUST);
             }
             if (params.get("datefrom") != null && !params.get("datefrom").isEmpty()) {
-                Query query6 = NumericRangeQuery.newIntRange("date", 1,
-                                                             Integer.parseInt(params.get("datefrom").replace("-", "")),
-                                                             Integer.parseInt(params.get("dateto").replace("-", "")),
-                                                             true, true);//queryParser6.parse(params.get("id"));
+                Query query6 = NumericRangeQuery.newIntRange("date", 1, Integer.parseInt(params.get("datefrom").replace("-", "")), Integer.parseInt(params.get("dateto").replace("-", "")), true, true);
+                //queryParser6.parse(params.get("id"));
                 finalQuery.add(query6, Occur.MUST);
             }
+
             TopDocs topDocs = indexSearcher.search(finalQuery, 300);
-            if (topDocs.totalHits > 0) { //
+            if (topDocs.totalHits > 0) {
                 for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
                     Document document = indexSearcher.doc(scoreDoc.doc);
-
-                    LegalDocument ld = new LegalDocument();
-                    ld.setURI(document.get("uri"));
-                    ld.setFEK(document.get("fek"));
-                    ld.setPublicationDate(
+                    LegalDocument legalDocument = new LegalDocument();
+                    legalDocument.setURI(document.get("uri"));
+                    legalDocument.setFEK(document.get("fek"));
+                    legalDocument.setPublicationDate(
                             document.get("date").substring(0, 4) + "-" + document.get("date").substring(4, 6) + "-" +
                                     document.get("date").substring(6, 8));
-                    ld.setDecisionType(document.get("type"));
-                    ld.setYear(document.get("year"));
-                    ld.setId(document.get("id"));
+                    legalDocument.setDecisionType(document.get("type"));
+                    legalDocument.setYear(document.get("year"));
+                    legalDocument.setId(document.get("id"));
                     String title = CommonUtils.trimDoubleQuotes(document.get("title"));
                     if (title.length() > 400) {
                         title = title.substring(0, 350) + "[...]";
                     }
-                    ld.setTitle(title);
-                    LDs.add(ld);
+                    legalDocument.setTitle(title);
+                    legalDocumentL.add(legalDocument);
                 }
             }
-        } catch (Exception e) {
-            // TODO: handle exception
-            Logger.getLogger(LegalDocumentDAOImpl.class.getName()).log(Level.SEVERE, null, e);
+        } catch (IOException | ParseException e) {
+            throw new NomothesiaException(e);
         }
 
-        return LDs;
+        return legalDocumentL;
     }
 
     @Override
@@ -2498,7 +2468,7 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                         "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
                         "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
                         "PREFIX metalex:<http://www.metalex.eu/metalex/2008-05-02#>\n" +
-                        "PREFIX leg: <" +uriBase+ "ontology/>\n" +
+                        "PREFIX leg: <" + uriBase + "ontology/>\n" +
                         "PREFIX dc: <http://purl.org/dc/terms/>\n" +
                         "SELECT ?gaz ?title ?pdf ?doc ?type ?date (COUNT (?doc) AS ?docs) (COUNT (?part) AS ?issues)\n" +
                         "WHERE{\n" +
@@ -2575,7 +2545,7 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                     }
                 }
             } finally {
-                try{
+                try {
                     con.close();
                 } catch (RepositoryException re) {
                     throw new NomothesiaException(re);
@@ -2602,7 +2572,7 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
         try {
             RepositoryConnection con = getSesameConnection();
             try {
-                for (LegislationTypesEnum type: types) {
+                for (LegislationTypesEnum type : types) {
                     String getTypeQuery = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
                             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
                             "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
@@ -2741,5 +2711,5 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
             throw new NomothesiaException(ex);
         }
     }
-    
+
 }

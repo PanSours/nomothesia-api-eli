@@ -7,17 +7,20 @@
 <c:set var="contextPath" value="${pageContext.request.contextPath}"/>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring" %>
-<c:set var="ionian_nums" value="${fn:split('α,β,γ,δ,ε,στ,ζ,η,θ,ι,ια,ιβ,ιγ,ιδ,ιε,ιστ,ιζ,ιη,ιθ,κ,κα,κβ,,κγ,κδ,κε,κστ,κζ,κη,κθ,λ,λα,λβ,,λγ,λδ,λε,λστ,λζ,λη,λθ', ',')}" scope="application" />
-<c:set var="chap_nums" value="${fn:split('Α,Β,Γ,Δ,Ε,ΣΤ,Ζ,Η,Θ,Ι,ΙΑ,ΙΒ,ΙΓ,ΙΔ,ΙΕ,ΙΣΤ,ΙΖ,ΙΗ,ΙΘ', ',')}" scope="application" />
+<spring:message code="basic.ionian" var="ionianNum"/>
+<c:set var="ionian_nums" value="${fn:split(ionianNum, ',')}" scope="application" />
+<spring:message code="basic.ionian" var="chapNum"/>
+<c:set var="chap_nums" value="${fn:split(chapNum, ',')}" scope="application" />
+
 <!DOCTYPE html>
 <html lang="en">
     <head>
-
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="shortcut icon" href="/resources/images/logo.png" >
         <title><spring:message code="home.${legaldoc.getDecisionType()}"/> ${legaldoc.getYear()}/${legaldoc.getId()}</title>
+
         <!-- Bootstrap -->
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
@@ -39,9 +42,6 @@
         <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
         <link href="http://code.google.com/apis/maps/documentation/javascript/examples/default.css" rel="stylesheet" type="text/css" />
 
-        <!-- jQueryUI Calendar-->
-        <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>  
-
         <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 
@@ -59,7 +59,6 @@
 
         <script>
             $(document).ready(function () {
-
                 //Check to see if the window is top if not then display button
                 $(window).scroll(function () {
                     if ($(this).scrollTop() > 100) {
@@ -80,7 +79,6 @@
 
         <script type="text/javascript" language="javascript" src="//cdn.datatables.net/plug-ins/3cfcc339e89/integration/bootstrap/3/dataTables.bootstrap.js"></script>
 
-
         <script>
             function prepareList() {
                 $('#messagescol').find('li:has(ul)')
@@ -93,8 +91,7 @@
                         })
                         .addClass('collapsed')
                         .children('ul').hide();
-            }
-            ;
+            };
 
             $(document).ready(function () {
                 prepareList('&plusmn; ');
@@ -111,7 +108,7 @@
 
         <style>
             #footer {
-                position:absolute;
+                position:relative;
                 width:100%;
                 height:60px;   /* Height of the footer */
                 /*background:#6cf;*/
@@ -124,70 +121,12 @@
                 box-shadow: 0;
                 display: inline;
             }
-
         </style>
-    </style>
+    </head>
 
-</head>
-
-<body <c:if test="${not empty legaldoc.getPlace()}">onload="initialize()"</c:if>>
-
-        <!-- Navigation Bar -->
-        <div id="custom-bootstrap-menu" class="navbar navbar-default " role="navigation">
-            <div class="container-fluid">
-                <div class="navbar-header"><a class="navbar-brand"  href="/"><img style="height: 40px; margin-top: -10px;" src="/resources/images/logo.png"</img></a>
-                <a class="navbar-brand"  href="/" style="font-family:'Jura'; font-size: 33px"><spring:message code="navbar.brand"/></a>
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-menubuilder">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-            </div>
-
-            <div class="collapse navbar-collapse navbar-menubuilder">
-                <ul class="nav navbar-nav navbar-left">
-                    <li>
-                        <a href="/" style="font-family: 'Comfortaa', cursive;"><spring:message code="navbar.home"/></a>
-                    </li>
-                    <li>
-                        <a href="/search" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.search"/></a>
-                    </li>
-                    <li>
-                        <a href="/endpoint" style="font-family: 'Comfortaa', cursive;" >Endpoint</a>
-                    </li>
-                    <li>
-                        <a href="/statistics" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.statistics"/></a>
-                    </li>
-                    <li>
-                        <a href="/aboutus" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.aboutus"/></a>
-                    </li>
-                    <li>
-                        <a href="/developer" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.info"/></a>
-                    </li>
-                    <li>
-                        <a href="/gazette" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.gazette"/></a>
-                    </li>
-                </ul>
-
-                <ul class="nav navbar-nav navbar-right">
-                    <c:set var="localeCode" value="${pageContext.response.locale}" />
-                    <c:choose>
-                        <c:when test="${localeCode == 'en' }"> 
-                            <li>
-                                <a href="?language=el_GR" style="font-family: 'Comfortaa', cursive;">EL</a>
-                            </li>
-                        </c:when>
-                        <c:when test="${localeCode == 'el_GR' }">
-                            <li>
-                                <a href="?language=en" style="font-family: 'Comfortaa', cursive;">EN</a>
-                            </li>
-                        </c:when>
-                    </c:choose>
-                </ul>
-            </div>
-        </div>
-    </div>
+    <body <c:if test="${not empty legaldoc.getPlace()}">onload="initialize()"</c:if>>
+        <!-- Include Navbar -->
+        <%@ include file="/resources/base/navbar.html" %>
 
     <!-- Search Form -->
     <div class="container">

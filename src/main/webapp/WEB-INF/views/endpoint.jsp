@@ -31,9 +31,6 @@
         <!-- Load CSS -->
         <link href="/resources/css/navbar.css" rel="stylesheet"/>
 
-        <!-- jQueryUI Calendar-->
-        <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
-
         <style>
             #footer {
                 position:relative;
@@ -103,7 +100,7 @@
                     <div class="alert alert-warning" role="alert">${endpointResults.getMessage()}</div>
                 </c:if>
                 <c:if test="${not empty endpointResults.getResults()}">
-                    <div class="table-responsive">
+                    <div class="table-responsive" style="overflow:scroll;height:400px;width:100%;overflow:auto">
                         <table id="example" class="table table-striped table-bordered" style="text-align: left; font-size: 12px;" cellspacing="0" width="80%">
                             ${endpointResults.getResults()}
                         </table>

@@ -51,7 +51,7 @@
                                     src="/resources/images/soursos.jpg" width = "100" length="100" class="img-circle"></a>
                                 </li>
                                 <li style="display: inline; padding-right: 20px;"><a href="#tab3"><img
-                                    src="/resources/images/charnik.jpg" width = "100" length="100" class="img-circle"></a>
+                                    src="/resources/images/mpampis.jpg" width = "100" length="100" class="img-circle"></a>
                                 </li>
                                 <li style="display: inline; padding-right: 20px;"><a href="#tab4"><img
                                     src="/resources/images/koubarak.jpg" width = "100" length="100" class="img-circle"></a>

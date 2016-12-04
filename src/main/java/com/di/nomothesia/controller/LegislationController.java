@@ -40,62 +40,61 @@ public class LegislationController {
     @Autowired
     LegislationService legislationService;
 	
-//	private static final Logger logger = LoggerFactory.getLogger(LegislationController.class);
+    //private static final Logger logger = LoggerFactory.getLogger(LegislationController.class);
 	
-        @RequestMapping(value = "/gazette/a/{year:\\d+}/{id:\\d+}", method = RequestMethod.GET)
-        public void presentGovernmentGazettePDF(@PathVariable String year, @PathVariable String id, Model model, Locale locale,HttpServletResponse response) throws IOException {
-          InputStream fis = null;
-          fis = getClass().getResourceAsStream("/pdf/"+year+"/GG"+year+"_"+id+".pdf");
-          org.apache.commons.io.IOUtils.copy(fis, response.getOutputStream());
-          response.setContentType("application/pdf");
-          response.flushBuffer();
-
-        }
+    @RequestMapping(value = "/gazette/a/{year:\\d+}/{id:\\d+}", method = RequestMethod.GET)
+    public void presentGovernmentGazettePDF(@PathVariable String year, @PathVariable String id, Model model, Locale locale,HttpServletResponse response) throws IOException {
+      InputStream fis;
+      fis = getClass().getResourceAsStream("/pdf/"+year+"/GG"+year+"_"+id+".pdf");
+      org.apache.commons.io.IOUtils.copy(fis, response.getOutputStream());
+      response.setContentType("application/pdf");
+      response.flushBuffer();
+    }
         
 	@RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/enacted", method = RequestMethod.GET)
 	public String presentOriginalLegalDocument(@PathVariable String type, @PathVariable String year, @PathVariable String id, Model model, Locale locale) throws NomothesiaException {
-            LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
-            model.addAttribute("legaldoc", legaldoc);
-            List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, null);
-            model.addAttribute("legalmods", legalmods);
-            model.addAttribute("id","custom-bootstrap-menu");
-            model.addAttribute("locale",locale);
-            if(legaldoc.getPublicationDate()==null){
-                return "error";
-            }
-            if(!legaldoc.getParts().isEmpty()){
-                return "basiclegislation3";
-            }
-            else if(legaldoc.getChapters().isEmpty()){
-                return "basiclegislation";
-            }
-            else{
-                return "basiclegislation2";
-            }
+        LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
+        model.addAttribute("legaldoc", legaldoc);
+        List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, null);
+        model.addAttribute("legalmods", legalmods);
+        model.addAttribute("id","custom-bootstrap-menu");
+        model.addAttribute("locale",locale);
+        if(legaldoc.getPublicationDate()==null){
+            return "error";
+        }
+        if(!legaldoc.getParts().isEmpty()){
+            return "basiclegislation3";
+        }
+        else if(legaldoc.getChapters().isEmpty()){
+            return "basiclegislation";
+        }
+        else{
+            return "basiclegislation2";
+        }
 	}
         
-        @RequestMapping(value = "/{type}/{year:\\d+}/{id}", method = RequestMethod.GET)
+    @RequestMapping(value = "/{type}/{year:\\d+}/{id}", method = RequestMethod.GET)
 	public String presentUpdatedLegalDocument(@PathVariable String type, @PathVariable String year, @PathVariable String id, Model model, Locale locale) throws NomothesiaException {
-            LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
-            List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, null);
-            List<Fragment> frags = legislationService.getUpdatedById(legaldoc, legalmods);
-            model.addAttribute("legalmods", legalmods);
-            model.addAttribute("fragschanced", frags);
-            model.addAttribute("legaldoc", legaldoc);
-            model.addAttribute("id","custom-bootstrap-menu");
-            model.addAttribute("locale",locale);
-            if(legaldoc.getPublicationDate()==null){
-                return "error";
-            }
-            if(!legaldoc.getParts().isEmpty()){
-                return "basiclegislation3";
-            }
-            else if(legaldoc.getChapters().isEmpty()){
-                return "basiclegislation";
-            }
-            else{
-                return "basiclegislation2";
-            }
+        LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
+        List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, null);
+        List<Fragment> frags = legislationService.getUpdatedById(legaldoc, legalmods);
+        model.addAttribute("legalmods", legalmods);
+        model.addAttribute("fragschanced", frags);
+        model.addAttribute("legaldoc", legaldoc);
+        model.addAttribute("id","custom-bootstrap-menu");
+        model.addAttribute("locale",locale);
+
+        if (legaldoc.getPublicationDate() == null) {
+            return "error";
+        }
+
+        if (!legaldoc.getParts().isEmpty()) {
+            return "basiclegislation3";
+        } else if(legaldoc.getChapters().isEmpty()) {
+            return "basiclegislation";
+        } else{
+            return "basiclegislation2";
+        }
 	}
         
         @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/{type1}/{id1}/{type2}/{id2}", method = RequestMethod.GET)
@@ -108,16 +107,16 @@ public class LegislationController {
             model.addAttribute("legaldoc", legaldoc);
             model.addAttribute("id", type1 + "-" + id1 + "-" +type2 + "-" + id2);
             model.addAttribute("locale",locale);
-            if(legaldoc.getPublicationDate()==null){
+
+            if (legaldoc.getPublicationDate() == null) {
                 return "error";
             }
-            if(!legaldoc.getParts().isEmpty()){
+
+            if (!legaldoc.getParts().isEmpty()) {
                 return "basiclegislation3";
-            }
-            else if(legaldoc.getChapters().isEmpty()){
+            } else if(legaldoc.getChapters().isEmpty()) {
                 return "basiclegislation";
-            }
-            else{
+            } else{
                 return "basiclegislation2";
             }
 	}
@@ -321,54 +320,53 @@ public class LegislationController {
             }
 	}
         
-        @RequestMapping(value = "/search", method = RequestMethod.GET)
+    @RequestMapping(value = "/search", method = RequestMethod.GET)
 	public String search(@RequestParam Map<String,String> params, Model model, Locale locale) throws NomothesiaException {
-            
-            if(params != null){
-                List<LegalDocument> LDs = legislationService.searchLegislation(params);
-                List<String> tags = legislationService.getTags();
-                model.addAttribute("legalDocuments", LDs);
-                model.addAttribute("tags",tags);
-                model.addAttribute("locale",locale);
+        if(params != null) {
+            List<LegalDocument> legalDocumentL = legislationService.searchLegislation(params);
+            List<String> tags = legislationService.getTags();
+            model.addAttribute("legalDocuments", legalDocumentL);
+            model.addAttribute("tags",tags);
+            model.addAttribute("locale",locale);
 
-                if((params.get("keywords")!=null) && !params.get("keywords").equals("")) {
-                    model.addAttribute("keywords",params.get("keywords"));
-                }
-
-                if((params.get("date")!=null) && !params.get("date").equals("")) {
-                    model.addAttribute("date",params.get("date"));
-                }
-
-                if((params.get("datefrom")!=null) && !params.get("datefrom").equals("")) {
-                    model.addAttribute("datefrom",params.get("datefrom"));
-                }
-
-                if((params.get("dateto")!=null) && !params.get("dateto").equals("")) {
-                    model.addAttribute("dateto",params.get("dateto"));
-                }
-
-                if((params.get("year")!=null) && !params.get("year").equals("")) {
-                    model.addAttribute("year",params.get("year"));
-                }
-
-                if((params.get("id")!=null) && !params.get("id").equals("")) {
-                    model.addAttribute("id",params.get("id"));
-                }
-
-                if((params.get("fek_year")!=null) && !params.get("fek_year").equals("")) {
-                    model.addAttribute("fek_year",params.get("fek_year"));
-                }
-
-                if((params.get("fek_id")!=null) && !params.get("fek_id").equals("")) {
-                    model.addAttribute("fek_id",params.get("fek_id"));
-                }
-
-                if((params.get("type")!=null) && !params.get("type").equals("")) {
-                    model.addAttribute("type",params.get("type"));
-                }
+            if((params.get("keywords")!=null) && !params.get("keywords").equals("")) {
+                model.addAttribute("keywords",params.get("keywords"));
             }
 
-            return "search";
+            if((params.get("date")!=null) && !params.get("date").equals("")) {
+                model.addAttribute("date",params.get("date"));
+            }
+
+            if((params.get("datefrom")!=null) && !params.get("datefrom").equals("")) {
+                model.addAttribute("datefrom",params.get("datefrom"));
+            }
+
+            if((params.get("dateto")!=null) && !params.get("dateto").equals("")) {
+                model.addAttribute("dateto",params.get("dateto"));
+            }
+
+            if((params.get("year")!=null) && !params.get("year").equals("")) {
+                model.addAttribute("year",params.get("year"));
+            }
+
+            if((params.get("id")!=null) && !params.get("id").equals("")) {
+                model.addAttribute("id",params.get("id"));
+            }
+
+            if((params.get("fek_year")!=null) && !params.get("fek_year").equals("")) {
+                model.addAttribute("fek_year",params.get("fek_year"));
+            }
+
+            if((params.get("fek_id")!=null) && !params.get("fek_id").equals("")) {
+                model.addAttribute("fek_id",params.get("fek_id"));
+            }
+
+            if((params.get("type")!=null) && !params.get("type").equals("")) {
+                model.addAttribute("type",params.get("type"));
+            }
+        }
+
+        return "search";
 	}
         
     @RequestMapping(value = "/endpoint", method = RequestMethod.GET)
@@ -395,7 +393,7 @@ public class LegislationController {
             return "endpoint";
 	}
 	
-       @ExceptionHandler(Exception.class)
+       @ExceptionHandler(NomothesiaException.class)
 	public String handleAllException(Exception ex) {
  
 		//ModelAndView model = new ModelAndView("error/exception_error");
