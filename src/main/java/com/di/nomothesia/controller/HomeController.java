@@ -17,11 +17,17 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.web.ErrorAttributes;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.servlet.ModelAndView;
 
 /**
  * Handles requests for the application home page.
@@ -31,6 +37,9 @@ public class HomeController {
 
     @Autowired
     LegislationService legislationService;
+
+    @Autowired
+    private ErrorAttributes errorAttributes;
 
     private static final int BUFFER_SIZE = 4096;
     private static final String TAGS = "tags";
@@ -168,9 +177,15 @@ public class HomeController {
         outStream.close();
     }
 
-    @ExceptionHandler (NomothesiaException.class)
-    public String handleAllException(NomothesiaException ex) {
-        return "error";
+    @ExceptionHandler ({NomothesiaException.class, Exception.class})
+    @ResponseStatus (value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ModelAndView handleError(HttpServletRequest request, Exception ex) {
+        RequestAttributes requestAttributes = new ServletRequestAttributes(request);
+        errorAttributes.getErrorAttributes(requestAttributes, false);
+        Error error = new Error(HttpStatus.INTERNAL_SERVER_ERROR.value(), errorAttributes.getErrorAttributes
+                (requestAttributes, false));
+
+        return new ModelAndView(NomothesiaErrorController.V_ERROR, NomothesiaErrorController.M_ERROR, error);
     }
 
 }

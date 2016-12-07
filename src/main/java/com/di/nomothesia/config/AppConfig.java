@@ -55,6 +55,17 @@ public class AppConfig extends WebMvcConfigurerAdapter {
         @Value ("${strabon.app.name}")
         private String strabonAppName;
 
+        @Value ("${format.date.web}")
+        private String dateFormat;
+
+        public String getDateFormat() {
+            return dateFormat;
+        }
+
+        public void setDateFormat(String dateFormat) {
+            this.dateFormat = dateFormat;
+        }
+
         public String getSesameServer() {
             return sesameServer;
         }

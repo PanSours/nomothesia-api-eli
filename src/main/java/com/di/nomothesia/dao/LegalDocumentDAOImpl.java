@@ -1748,30 +1748,16 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
     }
 
     @Override
-    public List<Modification> getAllModifications(String decisionType, String year, String id, String date, int req) {
-
-        List<Modification> modifications = new ArrayList<Modification>();
-        String sesameServer = "";
-        String repositoryID = "";
-
-        // Connect to Sesame
-        Repository repo = new HTTPRepository(applicationProperties.getSesameServer(), applicationProperties.getSesameRepositoryID());
-        try {
-
-            repo.initialize();
-
-        } catch (RepositoryException ex) {
-            Logger.getLogger(LegalDocumentDAOImpl.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public List<Modification> getAllModifications(String decisionType, String year, String id, String date, int req)
+            throws NomothesiaException{
+        List<Modification> modifications = new ArrayList<>();
 
         TupleQueryResult result;
 
         try {
-
-            RepositoryConnection con = repo.getConnection();
-
+            RepositoryConnection con = getSesameConnection();
             try {
-                String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                String getAllModsQuery = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
                         "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
                         "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
                         "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
@@ -1795,31 +1781,28 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                         " OPTIONAL{?work  dc:title ?title.}\n";
 
                 if (date != null) {
-
                     if (req == 1) {
-                        queryString += "FILTER (?date <= \"" + date + "\"^^xsd:date)\n" +
+                        getAllModsQuery += "FILTER (?date <= \"" + date + "\"^^xsd:date)\n" +
                                 "OPTIONAL{\n" +
                                 " ?part leg:text ?text.\n" +
                                 "}.}\n" +
                                 "ORDER BY ?mod";
                     } else if (req == 2) {
-                        queryString += "FILTER (?date <= \"" + date + "\"^^xsd:date)\n" +
+                        getAllModsQuery += "FILTER (?date <= \"" + date + "\"^^xsd:date)\n" +
                                 "FILTER NOT EXISTS {FILTER(langMatches(lang(?text), \"html\"))}\n" +
                                 "OPTIONAL{\n" +
                                 " ?part leg:text ?text.\n" +
                                 "}.}\n" +
                                 "ORDER BY ?mod";
                     }
-
                 } else {
-
                     if (req == 1) {
-                        queryString += "OPTIONAL{\n" +
+                        getAllModsQuery += "OPTIONAL{\n" +
                                 "?part leg:text ?text.\n" +
                                 "}.}\n" +
                                 "ORDER BY ?mod";
                     } else if (req == 2) {
-                        queryString += "FILTER NOT EXISTS {FILTER(langMatches(lang(?text), \"html\"))}\n" +
+                        getAllModsQuery += "FILTER NOT EXISTS {FILTER(langMatches(lang(?text), \"html\"))}\n" +
                                 "OPTIONAL{\n" +
                                 "?part leg:text ?text.\n" +
                                 "}.}\n" +
@@ -1828,12 +1811,11 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
 
                 }
 
-                //System.out.println(queryString);
-                TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, queryString);
+                //System.out.println(getAllModsQuery);
+                TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, getAllModsQuery);
                 result = tupleQuery.evaluate();
 
                 try {
-
                     // iterate the result set
                     int counter = -1;
                     int count = -1;
@@ -1844,21 +1826,16 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
 
                     Fragment fragment = null;
                     Modification mod = null;
-
                     String old = "old";
                     String current = "";
 
                     while (result.hasNext()) {
-
                         BindingSet bindingSet = result.next();
-
                         if (!bindingSet.getValue("mod").toString().equals(current)) {
-
                             if (mod != null) {
                                 mod.setFragment(fragment);
                                 modifications.add(mod);
                             }
-
                             mod = new Modification();
                             mod.setURI(bindingSet.getValue("mod").toString());
                             mod.setType(bindingSet.getValue("type").toString());
@@ -1875,11 +1852,9 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                             }
                             current = bindingSet.getValue("mod").toString();
                             frag = 0;
-
                         }
 
                         if (bindingSet.getValue("type2").toString().equals(uriBase + "ontology/Article")) {
-
                             Article article = new Article();
                             article.setId(Integer.toString(count + 2));
                             article.setURI(bindingSet.getValue("part").toString());
@@ -1898,13 +1873,11 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                             frag = 1;
 
                         } else if (bindingSet.getValue("type2").toString().equals(uriBase + "ontology/Paragraph")) {
-
                             Paragraph paragraph = new Paragraph();
                             paragraph.setId(Integer.toString(count2 + 2));
                             paragraph.setURI(bindingSet.getValue("part").toString());
                             //System.out.println(paragraph.getURI());
                             //System.out.println("NEW PARAGRAPH");
-
                             if (frag == 0) {
                                 fragment = paragraph;
                                 if (mod.getType().contains("Edit")) {
@@ -1923,13 +1896,10 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                             count2++;
                             count3 = -1;
                             count4 = -1;
-
                         } else if (bindingSet.getValue("type2").toString().equals(uriBase + "ontology/Passage")) {
-
                             Passage passage = new Passage();
                             passage.setId(count3 + 2);
                             passage.setURI(bindingSet.getValue("part").toString());
-
                             if (bindingSet.getValue("text").toString().contains("@html")) {
                                 String text = bindingSet.getValue("text").toString().replace("@html", "");
                                 passage.setText(CommonUtils.trimDoubleQuotes(text));
@@ -1964,14 +1934,11 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                             }
 
                             count3++;
-
                         } else if (bindingSet.getValue("type2").toString().equals(uriBase + "ontology/Case")) {
-
                             Case case1 = new Case();
                             case1.setId(count4 + 2);
                             case1.setURI(bindingSet.getValue("part").toString());
                             Passage passage = new Passage();
-
                             if (bindingSet.getValue("text").toString().contains("@html")) {
                                 String text = bindingSet.getValue("text").toString().replace("@html", "");
                                 passage.setText(CommonUtils.trimDoubleQuotes(text));
@@ -2007,25 +1974,29 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                             }
 
                             count4++;
-
                         }
-
                     }
                     if (mod != null) {
                         mod.setFragment(fragment);
                         modifications.add(mod);
                     }
-
                 } finally {
-                    result.close();
+                    try {
+                        result.close();
+                    } catch (QueryEvaluationException qe) {
+                        throw new NomothesiaException(qe);
+                    }
                 }
-
             } finally {
-                con.close();
+                try {
+                    con.close();
+                } catch (RepositoryException re) {
+                    throw new NomothesiaException(re);
+                }
             }
 
         } catch (OpenRDFException e) {
-            // handle exception
+            throw new NomothesiaException(e);
         }
 
         /*for(int i =0; i< modifications.size(); i++) {
@@ -2037,7 +2008,6 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
         }*/
 
         return modifications;
-
     }
 
     @Override

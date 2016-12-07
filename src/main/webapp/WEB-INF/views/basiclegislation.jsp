@@ -28,8 +28,8 @@
         <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
         <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
         <!--[if lt IE 9]>
-          <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-          <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+            <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+            <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
         <![endif]-->
 
         <!-- Load CSS -->
@@ -361,7 +361,8 @@
                             <div role="tabpanel" class="tab-pane" id="citations">
                             <c:if test="${not empty legaldoc.getCitations()}">
                             <div class="table-responsive">
-                                <table id="example" class="table table-striped table-bordered" style="text-align: left;" cellspacing="0" width="100%">
+                                <table id="basic_example" class="table table-striped table-bordered" style="text-align:
+                                left;" cellspacing="0" width="100%">
                                     <thead>
                                     <td><spring:message code="basic.mind"/></td>
                                     </thead>
@@ -506,7 +507,9 @@
                                      <c:set var="imagecount" value="0"/>
                                     <c:forEach var="image" items="${legaldoc.getImages()}" varStatus="loop">
                                         <c:set var="imagecount" value="${imagecount+1}"/>
-                                        <a href="/resources/images/leg/${image}" data-lightbox="roadtrip"><img width="200" src="/resources/images/leg/${legaldoc.getYear()}/${image}"</img></a>
+                                        <a href="/resources/images/leg/${image}" data-lightbox="roadtrip">
+                                            <img width="200" src="/resources/images/leg/${legaldoc.getYear()}/${image}"/>
+                                        </a>
                                     </c:forEach>
                                 </c:if>
                                 <c:if test="${empty legaldoc.getImages()}">
@@ -530,9 +533,9 @@
                 <div class="row"  style="height:400px;">&#160;&#160;</div>
             </div>
         </div>
-        <div id="footer" style="text-align: center; font-family:'Jura';" >
-            <h5><spring:message code="footer"/> - Open Data&#160;&#160; <img src="/resources/images/rdf.png" width="15"/> </h5>
-        </div>
+
+        <!-- Include Footer -->
+        <%@ include file="/resources/base/footer.html"%>
 
         <script src="/resources/js/lightbox.js"></script>
 

@@ -12,23 +12,22 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBException;
 import javax.xml.transform.TransformerException;
 //import org.slf4j.Logger;
 //import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.web.ErrorAttributes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.ModelAndView;
 
 /**
@@ -39,36 +38,44 @@ public class LegislationController {
 
     @Autowired
     LegislationService legislationService;
+
+    @Autowired
+    private ErrorAttributes errorAttributes;
 	
     //private static final Logger logger = LoggerFactory.getLogger(LegislationController.class);
 	
     @RequestMapping(value = "/gazette/a/{year:\\d+}/{id:\\d+}", method = RequestMethod.GET)
-    public void presentGovernmentGazettePDF(@PathVariable String year, @PathVariable String id, Model model, Locale locale,HttpServletResponse response) throws IOException {
+    public void presentGovernmentGazettePDF(@PathVariable String year, @PathVariable String id, Model model, Locale
+            locale,HttpServletResponse response) throws NomothesiaException {
       InputStream fis;
       fis = getClass().getResourceAsStream("/pdf/"+year+"/GG"+year+"_"+id+".pdf");
-      org.apache.commons.io.IOUtils.copy(fis, response.getOutputStream());
-      response.setContentType("application/pdf");
-      response.flushBuffer();
+      try {
+          org.apache.commons.io.IOUtils.copy(fis, response.getOutputStream());
+          response.setContentType("application/pdf");
+          response.flushBuffer();
+      } catch (IOException e) {
+          throw new NomothesiaException(e);
+      }
     }
         
 	@RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/enacted", method = RequestMethod.GET)
 	public String presentOriginalLegalDocument(@PathVariable String type, @PathVariable String year, @PathVariable String id, Model model, Locale locale) throws NomothesiaException {
         LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
-        model.addAttribute("legaldoc", legaldoc);
         List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, null);
+        model.addAttribute("legaldoc", legaldoc);
         model.addAttribute("legalmods", legalmods);
         model.addAttribute("id","custom-bootstrap-menu");
         model.addAttribute("locale",locale);
-        if(legaldoc.getPublicationDate()==null){
+
+        if (legaldoc.getPublicationDate() == null) {
             return "error";
         }
-        if(!legaldoc.getParts().isEmpty()){
+
+        if (!legaldoc.getParts().isEmpty()) {
             return "basiclegislation3";
-        }
-        else if(legaldoc.getChapters().isEmpty()){
+        } else if(legaldoc.getChapters().isEmpty()) {
             return "basiclegislation";
-        }
-        else{
+        } else{
             return "basiclegislation2";
         }
 	}
@@ -97,94 +104,94 @@ public class LegislationController {
         }
 	}
         
-        @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/{type1}/{id1}/{type2}/{id2}", method = RequestMethod.GET)
+    @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/{type1}/{id1}/{type2}/{id2}", method = RequestMethod.GET)
 	public String presentLegalFragment(@PathVariable String type, @PathVariable String year, @PathVariable String id, @PathVariable String type1, @PathVariable String id1, @PathVariable String type2, @PathVariable String id2, Model model, Locale locale) throws NomothesiaException {
-            LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
-            List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, null);
-            List<Fragment> frags = legislationService.getUpdatedById(legaldoc, legalmods);
-            model.addAttribute("legalmods", legalmods);
-            model.addAttribute("fragschanced", frags);
-            model.addAttribute("legaldoc", legaldoc);
-            model.addAttribute("id", type1 + "-" + id1 + "-" +type2 + "-" + id2);
-            model.addAttribute("locale",locale);
+        LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
+        List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, null);
+        List<Fragment> frags = legislationService.getUpdatedById(legaldoc, legalmods);
+        model.addAttribute("legalmods", legalmods);
+        model.addAttribute("fragschanced", frags);
+        model.addAttribute("legaldoc", legaldoc);
+        model.addAttribute("id", type1 + "-" + id1 + "-" +type2 + "-" + id2);
+        model.addAttribute("locale",locale);
 
-            if (legaldoc.getPublicationDate() == null) {
-                return "error";
-            }
-
-            if (!legaldoc.getParts().isEmpty()) {
-                return "basiclegislation3";
-            } else if(legaldoc.getChapters().isEmpty()) {
-                return "basiclegislation";
-            } else{
-                return "basiclegislation2";
-            }
-	}
-        
-        @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/{type1}/{id1}", method = RequestMethod.GET)
-	public String presentLegalFragmentless(@PathVariable String type, @PathVariable String year, @PathVariable String id, @PathVariable String type1, @PathVariable String id1, Model model, Locale locale) throws NomothesiaException {
-            LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
-            List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, null);
-            List<Fragment> frags = legislationService.getUpdatedById(legaldoc, legalmods);
-            model.addAttribute("legalmods", legalmods);
-            model.addAttribute("fragschanced", frags);
-            model.addAttribute("legaldoc", legaldoc);
-            model.addAttribute("id", type1 + "-" + id1);
-            model.addAttribute("locale",locale);
-            if(legaldoc.getPublicationDate()==null){
-                return "error";
-            }
-            if(!legaldoc.getParts().isEmpty()){
-                return "basiclegislation3";
-            }
-            else if(legaldoc.getChapters().isEmpty()){
-                return "basiclegislation";
-            }
-            else{
-                return "basiclegislation2";
-            }
-	}
-        
-        @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/{yyyy:\\d+}-{mm:\\d+}-{dd:\\d+}", method = RequestMethod.GET)
-        public String presentModificationByDate(@PathVariable String type, @PathVariable String year, @PathVariable String id, @PathVariable String yyyy, @PathVariable String mm, @PathVariable String dd, Model model, Locale locale) throws NomothesiaException {
-            
-            String date = "";
-            date += yyyy + "-" + mm + "-" + dd;
-            
-            LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
-            if (legaldoc.getPublicationDate().compareTo(date) > 0){
-             legaldoc = null;
-            }
-            List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, date);
-            List<Fragment> frags = legislationService.getUpdatedById(legaldoc, legalmods);
-            model.addAttribute("legalmods", legalmods);
-            model.addAttribute("fragschanced", frags);
-            model.addAttribute("legaldoc", legaldoc);
-            model.addAttribute("id","custom-bootstrap-menu");
-            model.addAttribute("locale",locale);
-            if(legaldoc.getPublicationDate()==null){
-                return "error";
-            }
-            if(!legaldoc.getParts().isEmpty()){
-                return "basiclegislation3";
-            }
-            else if(legaldoc.getChapters().isEmpty()){
-                return "basiclegislation";
-            }
-            else{
-                return "basiclegislation2";
-            }
-	}
-        
-        @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/{yyyy:\\d+}-{mm:\\d+}-{dd:\\d+}/data.xml", method = RequestMethod.GET, produces={"application/xml"})
-        public ResponseEntity<String> exportDateToXML(@PathVariable String type, @PathVariable String year, @PathVariable String id, @PathVariable String yyyy, @PathVariable String mm, @PathVariable String dd, Locale locale) throws TransformerException, NomothesiaException {
-            
-            String date = "";
-            date += yyyy + "-" + mm + "-" + dd;
-            String xml = legislationService.getUpdatedXMLByIdDate(type,year,id,2,date);
-            
-            return new ResponseEntity<String>(xml,new HttpHeaders(),HttpStatus.CREATED);
+        if (legaldoc.getPublicationDate() == null) {
+            return "error";
         }
+
+        if (!legaldoc.getParts().isEmpty()) {
+            return "basiclegislation3";
+        } else if(legaldoc.getChapters().isEmpty()) {
+            return "basiclegislation";
+        } else{
+            return "basiclegislation2";
+        }
+	}
+        
+    @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/{type1}/{id1}", method = RequestMethod.GET)
+	public String presentLegalFragmentless(@PathVariable String type, @PathVariable String year, @PathVariable String id, @PathVariable String type1, @PathVariable String id1, Model model, Locale locale) throws NomothesiaException {
+        LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
+        List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, null);
+        List<Fragment> frags = legislationService.getUpdatedById(legaldoc, legalmods);
+        model.addAttribute("legalmods", legalmods);
+        model.addAttribute("fragschanced", frags);
+        model.addAttribute("legaldoc", legaldoc);
+        model.addAttribute("id", type1 + "-" + id1);
+        model.addAttribute("locale",locale);
+
+        if (legaldoc.getPublicationDate() == null) {
+            return "error";
+        }
+
+        if (!legaldoc.getParts().isEmpty()) {
+            return "basiclegislation3";
+        } else if(legaldoc.getChapters().isEmpty()) {
+            return "basiclegislation";
+        } else{
+            return "basiclegislation2";
+        }
+	}
+        
+    @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/{yyyy:\\d+}-{mm:\\d+}-{dd:\\d+}", method = RequestMethod.GET)
+    public String presentModificationByDate(@PathVariable String type, @PathVariable String year, @PathVariable String id, @PathVariable String yyyy, @PathVariable String mm, @PathVariable String dd, Model model, Locale locale) throws NomothesiaException {
+        String date = "";
+        date += yyyy + "-" + mm + "-" + dd;
+
+        LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
+        if (legaldoc.getPublicationDate().compareTo(date) > 0){
+         legaldoc = null;
+        }
+        List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, date);
+        List<Fragment> frags = legislationService.getUpdatedById(legaldoc, legalmods);
+        model.addAttribute("legalmods", legalmods);
+        model.addAttribute("fragschanced", frags);
+        model.addAttribute("legaldoc", legaldoc);
+        model.addAttribute("id","custom-bootstrap-menu");
+        model.addAttribute("locale",locale);
+
+        if (legaldoc.getPublicationDate() == null) {
+            return "error";
+        }
+
+        if (!legaldoc.getParts().isEmpty()) {
+            return "basiclegislation3";
+        } else if(legaldoc.getChapters().isEmpty()) {
+            return "basiclegislation";
+        } else{
+            return "basiclegislation2";
+        }
+	}
+        
+    @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/{yyyy:\\d+}-{mm:\\d+}-{dd:\\d+}/data.xml", method = RequestMethod.GET, produces={"application/xml"})
+    public ResponseEntity<String> exportDateToXML(@PathVariable String type, @PathVariable String year, @PathVariable
+            String id, @PathVariable String yyyy, @PathVariable String mm, @PathVariable String dd, Locale locale)
+            throws NomothesiaException {
+        String date = "";
+        date += yyyy + "-" + mm + "-" + dd;
+
+        String xml = legislationService.getUpdatedXMLByIdDate(type,year,id,2,date);
+        return new ResponseEntity<>(xml,new HttpHeaders(),HttpStatus.CREATED);
+    }
         
         @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/{yyyy:\\d+}-{mm:\\d+}-{dd:\\d+}/data.rdf", method = RequestMethod.GET, produces={"application/xml"})
         public ResponseEntity<String> exportDateToRDF(@PathVariable String type, @PathVariable String year, @PathVariable String id, @PathVariable String yyyy, @PathVariable String mm, @PathVariable String dd, Locale locale) throws JAXBException, NomothesiaException {
@@ -392,14 +399,16 @@ public class LegislationController {
             }
             return "endpoint";
 	}
-	
-       @ExceptionHandler(NomothesiaException.class)
-	public String handleAllException(Exception ex) {
- 
-		//ModelAndView model = new ModelAndView("error/exception_error");
-                //model.addAttribute("locale",locale);
-		return "error";
- 
-	}
+
+    @ExceptionHandler ({NomothesiaException.class, Exception.class})
+    @ResponseStatus (value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ModelAndView handleError(HttpServletRequest request, Exception ex) {
+        RequestAttributes requestAttributes = new ServletRequestAttributes(request);
+        errorAttributes.getErrorAttributes(requestAttributes, false);
+        Error error = new Error(HttpStatus.INTERNAL_SERVER_ERROR.value(), errorAttributes.getErrorAttributes
+                (requestAttributes, false));
+
+        return new ModelAndView(NomothesiaErrorController.V_ERROR, NomothesiaErrorController.M_ERROR, error);
+    }
         
 }
