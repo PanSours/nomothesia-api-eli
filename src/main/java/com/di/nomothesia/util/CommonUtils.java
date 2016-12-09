@@ -1,13 +1,6 @@
 package com.di.nomothesia.util;
 
-import com.di.nomothesia.NomothesiaException;
-import com.di.nomothesia.config.AppConfig;
 import com.di.nomothesia.model.LegalDocument;
-import org.openrdf.repository.Repository;
-import org.openrdf.repository.RepositoryConnection;
-import org.openrdf.repository.RepositoryException;
-import org.openrdf.repository.http.HTTPRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * CommonUtils code for various operations.
@@ -16,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public final class CommonUtils {
 
-    //TODO make this a property
     private static final String URI_BASE = "http://legislation.di.uoa.gr/";
 
     private CommonUtils(){
