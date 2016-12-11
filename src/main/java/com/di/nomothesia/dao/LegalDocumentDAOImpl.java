@@ -5,80 +5,50 @@ import com.di.nomothesia.comparators.LegalDocumentSort;
 import com.di.nomothesia.config.AppConfig;
 import com.di.nomothesia.enums.LegislationTypesEnum;
 import com.di.nomothesia.enums.YearsEnum;
-import com.di.nomothesia.model.Chapter;
-import com.di.nomothesia.model.Article;
-import com.di.nomothesia.model.Case;
-import com.di.nomothesia.model.Citation;
-import com.di.nomothesia.model.EndpointResultSet;
-import com.di.nomothesia.model.Fragment;
-import com.di.nomothesia.model.GovernmentGazette;
-import com.di.nomothesia.model.LegalDocument;
-import com.di.nomothesia.model.Modification;
-import com.di.nomothesia.model.Paragraph;
-import com.di.nomothesia.model.Part;
-import com.di.nomothesia.model.Passage;
-import com.di.nomothesia.model.Signer;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
+import com.di.nomothesia.model.*;
 import com.di.nomothesia.util.CommonUtils;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.*;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
 import org.openrdf.OpenRDFException;
-import org.openrdf.query.BindingSet;
-import org.openrdf.query.MalformedQueryException;
-import org.openrdf.query.QueryEvaluationException;
-import org.openrdf.query.QueryLanguage;
-import org.openrdf.query.TupleQuery;
-import org.openrdf.query.TupleQueryResult;
+import org.openrdf.query.*;
+import org.openrdf.query.resultio.sparqlxml.SPARQLResultsXMLWriter;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.http.HTTPRepository;
 import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.rdfxml.RDFXMLWriter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.NumericRangeQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
-import org.openrdf.query.TupleQueryResultHandlerException;
-import org.openrdf.query.Update;
-import org.openrdf.query.resultio.sparqlxml.SPARQLResultsXMLWriter;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.stereotype.Service;
-import org.springframework.util.ResourceUtils;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 //import org.openrdf.query.resultio.stSPARQLQueryResultFormat;
 //import eu.earthobservatory.org.StrabonEndpoint.client.*;
 
 @Service
 public class LegalDocumentDAOImpl implements LegalDocumentDAO {
 
-    //TODO: make this dynamic
-    private final static String uriBase = "http://legislation.di.uoa.gr/";
+    private static final String uriBase = "http://legislation.di.uoa.gr/";
 
     @Autowired
     AppConfig.ApplicationProperties applicationProperties;
@@ -1571,67 +1541,34 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
     }
 
     @Override
-    public String getRDFById(String decisionType, String year, String id) {
-
+    public String getRDFById(String decisionType, String year, String id) throws NomothesiaException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        String sesameServer = "";
-        String repositoryID = "";
-
-        Properties props = new Properties();
-        InputStream fis = null;
-
-        try {
-            fis = getClass().getResourceAsStream("/nomothesia.properties");
-            props.load(fis);
-            // get the properties values
-            sesameServer = props.getProperty("SesameServer");
-            repositoryID = props.getProperty("SesameRepositoryID");
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // Connect to Sesame
-        Repository repo = new HTTPRepository(sesameServer, repositoryID);
-        try {
-            repo.initialize();
-        } catch (RepositoryException ex) {
-            Logger.getLogger(LegalDocumentDAOImpl.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
         String result = "";
 
         try {
-
-            RepositoryConnection con = repo.getConnection();
-
+            RepositoryConnection con = getSesameConnection();
             try {
-
-                String queryString =
+                String getRdfQuery =
                         "DESCRIBE <" + uriBase + decisionType + "/" + year + "/" + id + ">";
-                //System.out.println(queryString);
+                //System.out.println(getRdfQuery);
 
                 try {
                     // use SPARQL query
                     RDFXMLWriter writer = new RDFXMLWriter(out);
-                    con.prepareGraphQuery(QueryLanguage.SPARQL, queryString).evaluate(writer);
+                    con.prepareGraphQuery(QueryLanguage.SPARQL, getRdfQuery).evaluate(writer);
                     out.writeTo(System.out);
                     result = out.toString("ISO-8859-1");
                 } catch (IOException ex) {
-                    Logger.getLogger(LegalDocumentDAOImpl.class.getName()).log(Level.SEVERE, null, ex);
-                } finally {
+                    throw new NomothesiaException(ex);
                 }
-
             } finally {
                 con.close();
             }
-
         } catch (OpenRDFException e) {
-            // handle exception
+            throw new NomothesiaException(e);
         }
 
         return result;
-
     }
 
     @Override
@@ -2015,14 +1952,9 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
         List<LegalDocument> legalDocumentL = new ArrayList<>();
         //Apache Lucene searching via criteria
         try {
-            Path path = Paths.get("/resources/fek_index");
-            //home/kiddo/NetBeansProjects/nomothesia-api/src/main/resources/fek_index");//getClass().getResource("/fek_index").toString());
-            File file = new File("resources/fek_index");
-            String absolutePath = file.getAbsolutePath();
-
-
-            Directory directory = FSDirectory.open(path);
-            IndexReader indexReader = DirectoryReader.open(directory);
+            Path path = Paths.get("C:\\Users\\Panagiotis\\Documents\\IntellijProjects\\nomothesia-api-eli\\src\\main\\resources\\fek_index");
+            Directory directory2 = FSDirectory.open(path);
+            IndexReader indexReader = DirectoryReader.open(directory2);
             IndexSearcher indexSearcher = new IndexSearcher(indexReader);
             BooleanQuery finalQuery = new BooleanQuery();
 

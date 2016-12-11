@@ -28,8 +28,8 @@
         <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
         <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
         <!--[if lt IE 9]>
-            <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-            <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+          <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+          <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
         <![endif]-->
 
         <!-- Load CSS -->
@@ -39,6 +39,9 @@
         <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
         <link href="http://code.google.com/apis/maps/documentation/javascript/examples/default.css" rel="stylesheet" type="text/css" />
 
+        <!-- jQueryUI Calendar-->
+        <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
+
         <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 
@@ -47,8 +50,64 @@
         <script src="//code.jquery.com/jquery-1.10.2.js"></script>
         <script src="//code.jquery.com/ui/1.11.2/jquery-ui.js"></script>
 
+        <script>
+            $(function () {
+                $('html, body').animate({scrollTop: $('#${id}').position().top}, 'slow');
+                return false;
+            });
+        </script>
+
+        <script>
+            $(document).ready(function () {
+
+                //Check to see if the window is top if not then display button
+                $(window).scroll(function () {
+                    if ($(this).scrollTop() > 100) {
+                        $('.scrollToTop').fadeIn();
+                    } else {
+                        $('.scrollToTop').fadeOut();
+                    }
+                });
+
+                //Click event to scroll to top
+                $('.scrollToTop').click(function () {
+                    $('html, body').animate({scrollTop: 0}, 800);
+                    return false;
+                });
+
+            });
+        </script>
+
         <script type="text/javascript" language="javascript" src="//cdn.datatables.net/plug-ins/3cfcc339e89/integration/bootstrap/3/dataTables.bootstrap.js"></script>
-        <script src="/resources/js/basiclegislation.js"></script>
+
+
+        <script>
+            function prepareList() {
+                $('#messagescol').find('li:has(ul)')
+                        .click(function (event) {
+                            if (this == event.target) {
+                                $(this).toggleClass('expanded');
+                                $(this).children('ul').toggle('medium');
+                            }
+                            return false;
+                        })
+                        .addClass('collapsed')
+                        .children('ul').hide();
+            }
+            ;
+
+            $(document).ready(function () {
+                prepareList('&plusmn; ');
+            });
+
+            //CollapsibleLists.applyTo(document.getElementById('messages'));
+            //$(function (){
+            //    $('#messagescol').find('li:has(ul)').click(function(event) {
+            //        event.stopPropagation();
+            //    $(event.target).children('ul').slideToggle();
+            //    });
+            //});
+        </script>
 
         <style>
             #footer {

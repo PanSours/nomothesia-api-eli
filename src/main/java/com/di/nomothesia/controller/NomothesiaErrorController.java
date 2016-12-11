@@ -29,7 +29,6 @@ public class NomothesiaErrorController implements ErrorController {
     @Autowired
     private ErrorAttributes errorAttributes;
 
-
     @RequestMapping (value = PATH)
     ModelAndView error(HttpServletRequest request, HttpServletResponse response) {
         // Appropriate HTTP response code (e.g. 404 or 500) is automatically set by Spring.

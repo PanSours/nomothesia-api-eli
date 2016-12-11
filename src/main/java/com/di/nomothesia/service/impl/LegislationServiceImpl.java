@@ -1,8 +1,6 @@
 package com.di.nomothesia.service.impl;
 
 import com.di.nomothesia.NomothesiaException;
-import com.di.nomothesia.controller.XMLBuilder;
-import com.di.nomothesia.controller.XMLBuilder2;
 import com.di.nomothesia.dao.LegalDocumentDAO;
 import com.di.nomothesia.model.EndpointResultSet;
 import com.di.nomothesia.model.Fragment;
@@ -13,9 +11,10 @@ import com.di.nomothesia.model.Modification;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import javax.xml.transform.TransformerException;
 
 import com.di.nomothesia.service.LegislationService;
+import com.di.nomothesia.service.xml.ArticeXmlBuilder;
+import com.di.nomothesia.service.xml.ChapterXmlBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -29,10 +28,10 @@ public class LegislationServiceImpl implements LegislationService {
     LegalDocumentDAO legalDocumentDAO;
 
     @Autowired
-    XMLBuilder xmlBuilder;
+    ChapterXmlBuilder chapterXmlBuilder;
 
     @Autowired
-    XMLBuilder2 xmlBuilder2;
+    ArticeXmlBuilder articeXmlBuilder;
 
     @Cacheable (value="NomothesiaCache", key="{#decisionType, #year, #id, #request}")
     @Override
@@ -84,11 +83,7 @@ public class LegislationServiceImpl implements LegislationService {
         //Get Legal Document
         legald = legalDocumentDAO.getById(type, year, id, request, legald);
 
-        try {
-            return xmlBuilder.XMLbuilder(legald);
-        } catch (TransformerException te) {
-            throw new NomothesiaException(te);
-        }
+        return articeXmlBuilder.buildXml(legald);
     }
 
     @Cacheable (value="SearchResults", key="#params")
@@ -134,17 +129,9 @@ public class LegislationServiceImpl implements LegislationService {
         legald.applyModifications(mods);
         // Build XML
         if (!legald.getChapters().isEmpty()) {
-            try {
-                return xmlBuilder2.XMLbuilder2(legald);
-            } catch (TransformerException te) {
-                throw new NomothesiaException(te);
-            }
+            return chapterXmlBuilder.buildXml(legald);
         } else {
-            try {
-                return xmlBuilder.XMLbuilder(legald);
-            } catch (TransformerException te) {
-                throw new NomothesiaException(te);
-            }
+            return articeXmlBuilder.buildXml(legald);
         }
     }
 
@@ -161,19 +148,12 @@ public class LegislationServiceImpl implements LegislationService {
         List<Modification> mods = legalDocumentDAO.getAllModifications(type, year, id, date, request);
         //Apply Modifications
         legald.applyModifications(mods);
+
         // Build XML
         if (!legald.getChapters().isEmpty()) {
-            try {
-                return xmlBuilder2.XMLbuilder2(legald);
-            } catch (TransformerException te) {
-                throw new NomothesiaException(te);
-            }
+            return chapterXmlBuilder.buildXml(legald);
         } else {
-            try {
-                return xmlBuilder.XMLbuilder(legald);
-            } catch (TransformerException te) {
-                throw new NomothesiaException(te);
-            }
+            return articeXmlBuilder.buildXml(legald);
         }
     }
 
@@ -188,4 +168,5 @@ public class LegislationServiceImpl implements LegislationService {
     public List<ArrayList<String>> getStats() throws NomothesiaException {
         return legalDocumentDAO.getStatistics();
     }
+
 }

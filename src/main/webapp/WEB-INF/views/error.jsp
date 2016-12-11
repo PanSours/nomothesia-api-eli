@@ -31,14 +31,14 @@
         <![endif]-->
 
         <!-- Load CSS -->
-        <link href="../../resources/css/navbar.css" rel="stylesheet"/>
+        <link href="/resources/css/navbar.css" rel="stylesheet"/>
 
         <!-- jQueryUI Calendar-->
         <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>  
 
         <style>
             #footer {
-                position:absolute;
+                position:relative;
                 width:100%;
                 height:60px;   /* Height of the footer */
             }
@@ -46,65 +46,10 @@
 
     </head>
     <body>
+        <!-- Include Navbar -->
+        <%@ include file="/resources/base/navbar.html" %>
 
-        <!-- Navigation Bar -->
-        <div id="custom-bootstrap-menu" class="navbar navbar-default " role="navigation">
-            <div class="container-fluid">
-                <div class="navbar-header"><a class="navbar-brand"  href="/"><img style="height: 40px; margin-top: -10px;" src="../../resources/images/logo.png"</img></a>
-                    <a class="navbar-brand"  href="/" style="font-family:'Jura'; font-size: 33px"><spring:message code="navbar.brand"/></a>
-                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-menubuilder">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                </div>
-
-                <div class="collapse navbar-collapse navbar-menubuilder">
-                    <ul class="nav navbar-nav navbar-left">
-                        <li>
-                            <a href="/" style="font-family: 'Comfortaa', cursive;"><spring:message code="navbar.home"/></a>
-                        </li>
-                        <li>
-                            <a href="/search" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.search"/></a>
-                        </li>
-                        <li>
-                            <a href="/endpoint" style="font-family: 'Comfortaa', cursive;" >Endpoint</a>
-                        </li>
-                        <li>
-                            <a href="/statistics" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.statistics"/></a>
-                        </li>
-                        <li>
-                            <a href="/aboutus" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.aboutus"/></a>
-                        </li>
-                        <li>
-                            <a href="/developer" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.info"/></a>
-                        </li>
-                        <li>
-                            <a href="/gazette" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.gazette"/></a>
-                        </li>
-                    </ul>
-                    
-                    <ul class="nav navbar-nav navbar-right">
-                        <c:set var="localeCode" value="${pageContext.response.locale}" />
-                        <c:choose>
-                            <c:when test="${localeCode == 'en' }"> 
-                                <li>
-                                    <a href="?language=el_GR" style="font-family: 'Comfortaa', cursive;">EL</a>
-                                </li>
-                            </c:when>
-                            <c:when test="${localeCode == 'el_GR' }">
-                                <li>
-                                    <a href="?language=en" style="font-family: 'Comfortaa', cursive;">EN</a>
-                                </li>
-                            </c:when>
-                        </c:choose>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Search Form -->
+        <!-- Error Page -->
         <div class="container">
             <div class="row">
                 <div class="jumbotron" style="padding: 20px 20px 20px 20px;">
@@ -136,7 +81,7 @@
                                         <td width="5%"></td>
                                         <td width="45%">
                                             <div class="form-group">
-                                                <label for="exampleInputPassword1"><spring:message code="home.type"/></label>
+                                                <label><spring:message code="home.type"/></label>
                                                 <select class="form-control" name="type">
                                                     <option value="">-</option>
                                                     <option value="con"><spring:message code="home.con"/></option>
@@ -153,7 +98,7 @@
                                     <tr>
                                         <td width="45%">
                                             <div class="form-group">
-                                                <label for="exampleInputPassword2"><spring:message code="home.serial"/></label>
+                                                <label><spring:message code="home.serial"/></label>
                                                 <div class="row">
                                                     <div class="col-md-5">
                                                         <input class="form-control" value="" type="number" name="year" min="1976" max="2015" step="1">
@@ -168,7 +113,7 @@
                                         <td width="5%"></td>
                                         <td width="45%">
                                             <div class="form-group">
-                                                <label for="exampleInputPassword2"><spring:message code="home.date"/></label>
+                                                <label><spring:message code="home.date"/></label>
                                                 <div class='input-group date' >
                                                     <input type='text'  name="date" id='datepicker' class="form-control" placeholder="<spring:message code="home.dateplaceholder"/>"/>
                                                     <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
@@ -205,14 +150,13 @@
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <img align="center" src="../../resources/images/404.png"</img>
+                    <img align="center" src="../../resources/images/404.png"/>
                 </div>
             </div>
         </div>
 
-        <div id="footer" style="text-align: center; font-family:'Jura';" >
-            <h5><spring:message code="footer"/> - Open Data&#160;&#160; <img src="../../resources/images/rdf.png" width="15"/> </h5>
-        </div>
+        <!-- Include Footer -->
+        <%@ include file="/resources/base/footer.html"%>
 
         <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>

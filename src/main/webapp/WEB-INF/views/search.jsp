@@ -9,7 +9,6 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -22,6 +21,7 @@
         <link href='http://fonts.googleapis.com/css?family=Jura&subset=latin,greek' rel='stylesheet' type='text/css'>
         <link href='http://fonts.googleapis.com/css?family=Comfortaa&subset=latin,greek' rel='stylesheet' type='text/css'>
         <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/plug-ins/3cfcc339e89/integration/bootstrap/3/dataTables.bootstrap.css">
+
         <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
         <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
         <!--[if lt IE 9]>
@@ -47,63 +47,8 @@
     </head>
 
     <body>
-
-        <!-- Navigation Bar -->
-        <div id="custom-bootstrap-menu" class="navbar navbar-default " role="navigation">
-            <div class="container-fluid">
-                <div class="navbar-header"><a class="navbar-brand"  href="/"><img style="height: 40px; margin-top: -10px;" src="/resources/images/logo.png"</img></a>
-                    <a class="navbar-brand"  href="/" style="font-family:'Jura'; font-size: 33px"><spring:message code="navbar.brand"/></a>
-                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-menubuilder">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                </div>
-
-                <div class="collapse navbar-collapse navbar-menubuilder">
-                    <ul class="nav navbar-nav navbar-left">
-                        <li>
-                            <a href="/" style="font-family: 'Comfortaa', cursive;"><spring:message code="navbar.home"/></a>
-                        </li>
-                        <li>
-                            <a href="/search" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.search"/></a>
-                        </li>
-                        <li>
-                            <a href="/endpoint" style="font-family: 'Comfortaa', cursive;" >Endpoint</a>
-                        </li>
-                        <li>
-                            <a href="/statistics" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.statistics"/></a>
-                        </li>
-                        <li>
-                            <a href="/aboutus" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.aboutus"/></a>
-                        </li>
-                        <li>
-                            <a href="/developer" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.info"/></a>
-                        </li>
-                        <li>
-                            <a href="/gazette" style="font-family: 'Comfortaa', cursive;" ><spring:message code="navbar.gazette"/></a>
-                        </li>
-                    </ul>
-
-                    <ul class="nav navbar-nav navbar-right">
-                        <c:set var="localeCode" value="${pageContext.response.locale}" />
-                        <c:choose>
-                            <c:when test="${localeCode == 'en' }"> 
-                                <li>
-                                    <a href="?language=el_GR" style="font-family: 'Comfortaa', cursive;">EL</a>
-                                </li>
-                            </c:when>
-                            <c:when test="${localeCode == 'el_GR' }">
-                                <li>
-                                    <a href="?language=en" style="font-family: 'Comfortaa', cursive;">EN</a>
-                                </li>
-                            </c:when>
-                        </c:choose>
-                    </ul>
-                </div>
-            </div>
-        </div>
+        <!-- Include Navbar -->
+        <%@ include file="/resources/base/navbar.html" %>
 
         <!-- Search Form -->
         <div class="container-fluid">
@@ -229,13 +174,11 @@
                     </div>
                 </div>
             </div>
-            <div class="row"  style="height:400px;">&#160;&#160;</div>
-
+            <%--<div class="row"  style="height:400px;">&#160;&#160;</div>--%>
         </div>
 
-        <div id="footer" style="text-align: center; font-family:'Jura';" >
-            <h5><spring:message code="footer"/> - Open Data&#160;&#160; <img src="/resources/images/rdf.png" width="15"/> </h5>
-        </div>
+        <!-- Include Footer -->
+        <%@ include file="/resources/base/footer.html"%>
 
         <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>

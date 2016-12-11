@@ -2,6 +2,7 @@ package com.di.nomothesia.service.xml;
 
 import com.di.nomothesia.NomothesiaException;
 import com.di.nomothesia.model.*;
+import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -18,6 +19,7 @@ import java.io.Writer;
  * Created by psour on 9/12/2016.
  *
  */
+@Service
 public class ArticeXmlBuilder implements XmlBuilder<LegalDocument, String> {
 
     private static final String XML_NS = "http://dublincore.org/documentuments/dcmi-terms/";

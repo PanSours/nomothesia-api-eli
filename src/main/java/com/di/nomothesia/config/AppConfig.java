@@ -58,6 +58,17 @@ public class AppConfig extends WebMvcConfigurerAdapter {
         @Value ("${format.date.web}")
         private String dateFormat;
 
+        @Value ("${pdf.path}")
+        private String pdfPath;
+
+        public String getPdfPath() {
+            return pdfPath;
+        }
+
+        public void setPdfPath(String pdfPath) {
+            this.pdfPath = pdfPath;
+        }
+
         public String getDateFormat() {
             return dateFormat;
         }
