@@ -31,6 +31,7 @@ import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.rdfxml.RDFXMLWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
@@ -1704,7 +1705,7 @@ public class LegalDocumentDAOImpl implements LegalDocumentDAO {
                         "\n" +
                         "SELECT DISTINCT ?mod ?type ?patient ?work ?title ?date ?gaztitle ?part ?type2 ?text\n" +
                         "WHERE{\n" +
-                        " <" + uriBase + decisionType + "/" + year + "/" + id + ">" +
+                        "<" + uriBase + decisionType + "/" + year + "/" + id + ">" +
                         " metalex:realizedBy  ?version.\n" +
                         " ?version metalex:matterOf ?mod.\n" +
                         " ?mod rdf:type ?type.\n" +

@@ -65,7 +65,7 @@ public class LegislationController {
 	
     //private static final Logger logger = LoggerFactory.getLogger(LegislationController.class);
 	
-    @RequestMapping(value = "/gazette/a/{year:\\d+}/{id}", method = RequestMethod.GET)
+    @RequestMapping(value = "/gazette/a/{year:\\d+}/{id:\\d+}", method = RequestMethod.GET)
     public void presentGovernmentGazettePDF(@PathVariable String year, @PathVariable String id, Model model, Locale
             locale,HttpServletResponse response) throws NomothesiaException {
       InputStream fis;
@@ -79,7 +79,7 @@ public class LegislationController {
       }
     }
         
-	@RequestMapping(value = "/eli/{type}/{year:\\d+}/{id}/enacted", method = RequestMethod.GET)
+	@RequestMapping(value = "/eli/{type}/{year:\\d+}/{id:\\d+}/enacted", method = RequestMethod.GET)
 	public String presentOriginalLegalDocument(@PathVariable String type, @PathVariable String year, @PathVariable String id, Model model, Locale locale) throws NomothesiaException {
         LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
         List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, null);
@@ -101,7 +101,7 @@ public class LegislationController {
         }
 	}
         
-    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id}", method = RequestMethod.GET)
+    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id:\\d+}", method = RequestMethod.GET)
 	public String presentUpdatedLegalDocument(@PathVariable String type, @PathVariable String year, @PathVariable String id, Model model, Locale locale) throws NomothesiaException {
         LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
         List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, null);
@@ -125,7 +125,7 @@ public class LegislationController {
         }
 	}
         
-    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id}/{type1:(article|part|section)}/{id1}/{type2:(article|part|section|paragraph)}/{id2}", method = RequestMethod.GET)
+    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id:\\d+}/{type1}/{id1:\\d+}/{type2}/{id2:\\d+}", method = RequestMethod.GET)
 	public String presentLegalFragment(@PathVariable String type, @PathVariable String year, @PathVariable String id, @PathVariable String type1, @PathVariable String id1, @PathVariable String type2, @PathVariable String id2, Model model, Locale locale) throws NomothesiaException {
         LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
         List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, null);
@@ -149,7 +149,7 @@ public class LegislationController {
         }
 	}
         
-    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id}/{type1:(article|part)}/{id1}", method = RequestMethod.GET)
+    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id:\\d+}/{type1}/{id1:\\d+}", method = RequestMethod.GET)
 	public String presentLegalFragmentless(@PathVariable String type, @PathVariable String year, @PathVariable String id, @PathVariable String type1, @PathVariable String id1, Model model, Locale locale) throws NomothesiaException {
         LegalDocument legaldoc = legislationService.getById(type, year, id, 1);
         List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, null);
@@ -173,7 +173,7 @@ public class LegislationController {
         }
 	}
         
-    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id}/{yyyy:\\d+}-{mm:\\d+}-{dd:\\d+}", method = RequestMethod.GET)
+    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id:\\d+}/{yyyy:\\d+}-{mm:\\d+}-{dd:\\d+}", method = RequestMethod.GET)
     public String presentModificationByDate(@PathVariable String type, @PathVariable String year, @PathVariable String id, @PathVariable String yyyy, @PathVariable String mm, @PathVariable String dd, Model model, Locale locale) throws NomothesiaException {
         String date = "";
         date += yyyy + "-" + mm + "-" + dd;
@@ -185,7 +185,7 @@ public class LegislationController {
         List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 1, date);
         List<Fragment> frags = legislationService.getUpdatedById(legaldoc, legalmods);
         model.addAttribute(LEGAL_MODS, legalmods);
-        model.addAttribute("fragschanced", frags);
+        model.addAttribute(FRAGMENTS, frags);
         model.addAttribute(LEGAL_DOC, legaldoc);
         model.addAttribute(LegislationServiceEnum.ID.getType(), BOOTSTRAP);
         model.addAttribute(LOCALE,locale);
@@ -203,7 +203,7 @@ public class LegislationController {
         }
 	}
         
-    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id}/{yyyy:\\d+}-{mm:\\d+}-{dd:\\d+}/data.xml", method = RequestMethod.GET, produces={"application/xml"})
+    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id:\\d+}/{yyyy:\\d+}-{mm:\\d+}-{dd:\\d+}/data.xml", method = RequestMethod.GET, produces={"application/xml"})
     public ResponseEntity<String> exportDateToXML(@PathVariable String type, @PathVariable String year, @PathVariable
             String id, @PathVariable String yyyy, @PathVariable String mm, @PathVariable String dd, Locale locale)
             throws NomothesiaException {
@@ -215,15 +215,15 @@ public class LegislationController {
     }
 
     //TODO:FIX
-    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id}/{yyyy:\\d+}-{mm:\\d+}-{dd:\\d+}/data.rdf", method = RequestMethod.GET, produces={"application/xml"})
-    public ResponseEntity<String> exportDateToRDF(@PathVariable String type, @PathVariable String year, @PathVariable String id, @PathVariable String yyyy, @PathVariable String mm, @PathVariable String dd, Locale locale) throws NomothesiaException {
+    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id:\\d+}/{yyyy:\\d+}-{mm:\\d+}-{dd:\\d+}/data.rdf", method = RequestMethod.GET, produces={"application/xml"})
+    public ResponseEntity<String> exportDateToRDF(@PathVariable String type, @PathVariable String year, @PathVariable String id, Locale locale) throws NomothesiaException {
         String rdfResult = legislationService.getRDFById(type,year,id);
 
         return new ResponseEntity<>(rdfResult,new HttpHeaders(),HttpStatus.CREATED);
     }
         
-
-    @RequestMapping(value="/eli/{type}/{year:\\d+}/{id}/{yyyy:\\d+}-{mm:\\d+}-{dd:\\d+}/data.json", method = RequestMethod.GET)
+    //TODO:FIX
+    @RequestMapping(value="/eli/{type}/{year:\\d+}/{id:\\d+}/{yyyy:\\d+}-{mm:\\d+}-{dd:\\d+}/data.json", method = RequestMethod.GET)
 	public @ResponseBody LegalDocument exportDateToJSON(@PathVariable String type, @PathVariable String year, @PathVariable String id,@PathVariable String yyyy, @PathVariable String mm, @PathVariable String dd, Locale locale) throws NomothesiaException {
         String date = "";
         date += yyyy + "-" + mm + "-" + dd;
@@ -237,8 +237,9 @@ public class LegislationController {
 
         return legaldoc;
 	}
-        
-    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id}/{yyyy:\\d+}-{mm:\\d+}-{dd:\\d+}/data.pdf", method = RequestMethod.GET, produces={"application/xml"})
+
+    //TODO:FIX
+    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id:\\d+}/{yyyy:\\d+}-{mm:\\d+}-{dd:\\d+}/data.pdf", method = RequestMethod.GET, produces={"application/xml"})
     public ModelAndView exportDateToPDF(@PathVariable String type, @PathVariable String year, @PathVariable String id, @PathVariable String yyyy, @PathVariable String mm, @PathVariable String dd, Locale locale) throws NomothesiaException {
         String date = "";
         date += yyyy + "-" + mm + "-" + dd;
@@ -259,62 +260,59 @@ public class LegislationController {
         }
 	}
         
-    @RequestMapping(value = "/{type}/{year:\\d+}/{id}/enacted/data.xml", method = RequestMethod.GET, produces={"application/xml"})
+    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id}/enacted/data.xml", method = RequestMethod.GET, produces={"application/xml"})
     public ResponseEntity<String> exportToXML(@PathVariable String type, @PathVariable String year, @PathVariable String id, Locale locale) throws NomothesiaException {
         String xml = legislationService.getXMLById(type,year,id,2);
 
         return new ResponseEntity<>(xml,new HttpHeaders(),HttpStatus.CREATED);
     }
-        
-        
-        @RequestMapping(value = "/{type}/{year:\\d+}/{id}/enacted/data.rdf", method = RequestMethod.GET,  produces={"application/xml"})
+
+    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id:\\d+}/enacted/data.rdf", method = RequestMethod.GET, produces={"application/rdf+xml"})
 	public ResponseEntity<String> exportToRDF(@PathVariable String type, @PathVariable String year, @PathVariable String id, Locale locale) throws NomothesiaException {
+        String rdfResult = legislationService.getRDFById(type,year,id);
             
-            String rdfResult = legislationService.getRDFById(type,year,id);
-            
-            return new ResponseEntity<>(rdfResult,new HttpHeaders(),HttpStatus.CREATED);
-	
-        }
-        
-        @RequestMapping(value="/{type}/{year:\\d+}/{id:\\d+}/enacted/data.json", method = RequestMethod.GET)
+        return new ResponseEntity<>(rdfResult,new HttpHeaders(),HttpStatus.CREATED);
+    }
+
+    //TODO:FIX
+    @RequestMapping(value="/eli/{type}/{year:\\d+}/{id:\\d+}/enacted/data.json", method = RequestMethod.GET, produces={"application/json"})
 	public @ResponseBody LegalDocument exportToJSON(@PathVariable String type, @PathVariable String year, @PathVariable String id, Locale locale) throws NomothesiaException {
-            LegalDocument legal = legislationService.getById(type,year,id,2);
-            legal.setPlace(null);
+        LegalDocument legal = legislationService.getById(type,year,id,2);
+        legal.setPlace(null);
             
-            return legal;
- 
-	}
-        
-        @RequestMapping(value = "/{type}/{year:\\d+}/{id:\\d+}/enacted/data.pdf", method = RequestMethod.GET)
-	public ModelAndView exportToPDF(@PathVariable String type, @PathVariable String year, @PathVariable String id, Locale locale) throws NomothesiaException {
-            
-            LegalDocument legaldoc = legislationService.getById(type,year,id,2);
-            if(!legaldoc.getParts().isEmpty()){
-                return new ModelAndView("pdfView3", "legaldocument", legaldoc);
-            }
-            if(!legaldoc.getChapters().isEmpty()){
-                return new ModelAndView("pdfView2", "legaldocument", legaldoc);
-            }
-            else{
-                return new ModelAndView("pdfView", "legaldocument", legaldoc);
-            }
+        return legal;
 	}
 
-    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id}/data.xml", method = RequestMethod.GET, produces={"application/xml"})
+    //TODO:FIX
+    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id:\\d+}/enacted/data.pdf", method = RequestMethod.GET, produces={"application/pdf"})
+	public ModelAndView exportToPDF(@PathVariable String type, @PathVariable String year, @PathVariable String id, Locale locale) throws NomothesiaException {
+        LegalDocument legaldoc = legislationService.getById(type,year,id,2);
+        if(!legaldoc.getParts().isEmpty()){
+            return new ModelAndView("pdfView3", "legaldocument", legaldoc);
+        }
+        if(!legaldoc.getChapters().isEmpty()){
+            return new ModelAndView("pdfView2", "legaldocument", legaldoc);
+        }
+        else{
+            return new ModelAndView("pdfView", "legaldocument", legaldoc);
+        }
+	}
+
+    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id:\\d+}/data.xml", method = RequestMethod.GET, produces={"application/xml"})
     public ResponseEntity<String> exportUpdatedToXML(@PathVariable String type, @PathVariable String year, @PathVariable String id, Locale locale) throws NomothesiaException {
         String xml = legislationService.getUpdatedXMLById(type,year,id,2);
 
         return new ResponseEntity<>(xml,new HttpHeaders(),HttpStatus.CREATED);
     }
         
-    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id}/data.rdf", method = RequestMethod.GET,  produces={"application/xml"})
+    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id:\\d+}/data.rdf", method = RequestMethod.GET,  produces={"application/rdf+xml"})
 	public ResponseEntity<String> exportUpdatedToRDF(@PathVariable String type, @PathVariable String year, @PathVariable String id, Locale locale) throws  NomothesiaException {
         String rdfResult = legislationService.getRDFById(type,year,id);
 
         return new ResponseEntity<>(rdfResult,new HttpHeaders(),HttpStatus.CREATED);
     }
         
-    @RequestMapping(value="/eli/{type}/{year:\\d+}/{id}/data.json", method = RequestMethod.GET)
+    @RequestMapping(value="/eli/{type}/{year:\\d+}/{id:\\d+}/data.json", method = RequestMethod.GET)
 	public @ResponseBody LegalDocument exportUpdatedToJSON(@PathVariable String type, @PathVariable String year, @PathVariable String id, Locale locale) throws NomothesiaException {
         LegalDocument legaldoc = legislationService.getById(type, year, id, 2);
         List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 2, null);
@@ -324,7 +322,7 @@ public class LegislationController {
         return legaldoc;
 	}
         
-    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id}/data.pdf", method = RequestMethod.GET)
+    @RequestMapping(value = "/eli/{type}/{year:\\d+}/{id:\\d+}/data.pdf", method = RequestMethod.GET)
 	public ModelAndView exportUpdatedToPDF(@PathVariable String type, @PathVariable String year, @PathVariable String id, Locale locale) throws NomothesiaException {
             LegalDocument legaldoc = legislationService.getById(type, year, id, 2);
             List<Modification> legalmods = legislationService.getAllModificationsById(type, year, id, 2, null);

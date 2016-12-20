@@ -1,6 +1,7 @@
 package com.di.nomothesia.service.xml;
 
 import com.di.nomothesia.NomothesiaException;
+import com.di.nomothesia.enums.LegislationServiceEnum;
 import com.di.nomothesia.model.*;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
@@ -36,8 +37,8 @@ public class ArticeXmlBuilder implements XmlBuilder<LegalDocument, String> {
 
             //Root Element
             Element rootElement = document.createElement("LegalDocument");
-            rootElement.setAttribute("id", legalDocument.getId());
-            rootElement.setAttribute("documentURI", legalDocument.getURI());
+            rootElement.setAttribute(LegislationServiceEnum.ID.getType(), legalDocument.getId());
+            rootElement.setAttribute(LegislationServiceEnum.DOC_URI.getType(), legalDocument.getURI());
             document.appendChild(rootElement);
 
             //Metadata Branch
@@ -91,7 +92,7 @@ public class ArticeXmlBuilder implements XmlBuilder<LegalDocument, String> {
                 //for every tag
                 for (int i=0;i<legalDocument.getTags().size();i++) {
                     Element tag = document.createElement("Tag");
-                    tag.setAttribute("id", "" + (i+1));
+                    tag.setAttribute(LegislationServiceEnum.ID.getType(), Integer.toString(i+1));
                     tag.setTextContent(legalDocument.getTags().get(i));
                     tags.appendChild(tag);
                 }
@@ -126,8 +127,8 @@ public class ArticeXmlBuilder implements XmlBuilder<LegalDocument, String> {
                 //for every ciation
                 for (Citation citation : legalDocument.getCitations()) {
                     Element citationE = document.createElement("Citation");
-                    citationE.setAttribute("id", "" + citation.getId());
-                    citationE.setAttribute("documentURI", citation.getURI());
+                    citationE.setAttribute(LegislationServiceEnum.ID.getType(), Integer.toString(citation.getId()));
+                    citationE.setAttribute(LegislationServiceEnum.DOC_URI.getType(), citation.getURI());
                     Element citText = document.createElement("text");
                     citText.setTextContent(citation.getDescription());
                     citationE.appendChild(citText);
@@ -146,30 +147,12 @@ public class ArticeXmlBuilder implements XmlBuilder<LegalDocument, String> {
                 }
             }
 
-            //Body Branch
-            //NOT IMPLEMENTED YET
-            /*Element body = doc.createElement("Body");
-            rootElement.appendChild(body);
-
-            Element book = doc.createElement("Book");
-            body.appendChild(book);
-
-            Element section = doc.createElement("Section");
-            book.appendChild(section);
-
-            Element chapter = doc.createElement("Chapter");
-            section.appendChild(chapter);
-
-            Element part = doc.createElement("Part");
-            chapter.appendChild(part);*/
-
             //Article Branch (inside body when body is completed)
             for (Article article : legalDocument.getArticles()) {
                 //article
-                Element articleE = document.createElement("Article");
-                //article.setAttribute("number","" + legald.getArticles().get(i));
-                articleE.setAttribute("id", "" + article.getId());
-                articleE.setAttribute("documentURI", article.getURI());
+                Element articleE = document.createElement(LegislationServiceEnum.ARTICLE.getType());
+                articleE.setAttribute(LegislationServiceEnum.ID.getType(), article.getId());
+                articleE.setAttribute(LegislationServiceEnum.DOC_URI.getType(), article.getURI());
                 rootElement.appendChild(articleE);
 
                 //article title
@@ -179,54 +162,28 @@ public class ArticeXmlBuilder implements XmlBuilder<LegalDocument, String> {
                     articleE.appendChild(artTitle);
                 }
 
-                //article id
-                //Element artId = doc.createElement("Id");
-                //artId.setTextContent("" + legald.getArticles().get(i).getId());
-                //article.appendChild(artId);
-
                 for (Paragraph paragraph : article.getParagraphs()) {
                     //paragraph
-                    Element paragraphE = document.createElement("Paragraph");
-                    paragraphE.setAttribute("id", "" + paragraph.getId());
-                    paragraphE.setAttribute("documentURI", paragraph.getURI());
-                    //paragraph.setAttribute("number","" + legald.getArticles().get(i).getParagraphs().get(j));
-
-                    //paragraph id
-                    //Element parId = doc.createElement("Id");
-                    //parId.setTextContent("" + legald.getArticles().get(i).getParagraphs().get(j).getId());
-                    //paragraph.appendChild(parId);
-
-                    //NOT IMPLEMENTED YET
-                    //Element parTable = doc.createElement("Table");
-                    //parTable.setTextContent(legald.getArticles().get(i).getParagraphs().get(j).getTable());
-                    //paragraph.appendChild(parTable);
+                    Element paragraphE = document.createElement(LegislationServiceEnum.PARAGRAPH.getType());
+                    paragraphE.setAttribute(LegislationServiceEnum.ID.getType(), paragraph.getId());
+                    paragraphE.setAttribute(LegislationServiceEnum.DOC_URI.getType(), paragraph.getURI());
 
                     Element list = document.createElement("List");
 
                     for(Case caseL : paragraph.getCaseList()) {
                         //paragraph case list
                         paragraphE.appendChild(list);
-                        Element pcase = document.createElement("Case");
-                        pcase.setAttribute("id", "" + caseL.getId());
-                        pcase.setAttribute("documentURI", caseL.getURI());
+                        Element pcase = document.createElement(LegislationServiceEnum.CASE.getType());
+                        pcase.setAttribute(LegislationServiceEnum.ID.getType(), Integer.toString(caseL.getId()));
+                        pcase.setAttribute(LegislationServiceEnum.DOC_URI.getType(), caseL.getURI());
                         list.appendChild(pcase);
-
-                        //case id
-                        //Element casId = doc.createElement("Id");
-                        //casId.setTextContent("" + legald.getArticles().get(i).getParagraphs().get(j).getCaseList().get(n).getId());
-                        //pcase.appendChild(casId);
 
                         //case passages
                         for (Passage passage :caseL.getPassages()) {
                             //case passages
-                            Element cpassage = document.createElement("Passage");
-                            cpassage.setAttribute("id", "" + passage.getId());
-                            cpassage.setAttribute("documentURI", passage.getURI());
-
-                            //case passage id
-                            //Element caseId = doc.createElement("Id");
-                            //caseId.setTextContent("" + legald.getArticles().get(i).getParagraphs().get(j).getCaseList().get(n).getPassages().get(m).getId());
-                            //cpassage.appendChild(caseId);
+                            Element cpassage = document.createElement(LegislationServiceEnum.PASSAGE.getType());
+                            cpassage.setAttribute(LegislationServiceEnum.ID.getType(), Integer.toString(passage.getId()));
+                            cpassage.setAttribute(LegislationServiceEnum.DOC_URI.getType(), passage.getURI());
 
                             //case passage text
                             Element casText = document.createElement("text");
@@ -243,17 +200,18 @@ public class ArticeXmlBuilder implements XmlBuilder<LegalDocument, String> {
                             for(Case caseR : caseL.getCaseList()) {
                                 //paragraph case list
                                 pcase.appendChild(list2);
-                                Element pcase2 = document.createElement("Case");
-                                pcase2.setAttribute("id", "" + caseR.getId());
-                                pcase2.setAttribute("documentURI", caseR.getURI());
+                                Element pcase2 = document.createElement(LegislationServiceEnum.CASE.getType());
+                                pcase2.setAttribute(LegislationServiceEnum.ID.getType(), Integer.toString(caseR.getId
+                                        ()));
+                                pcase2.setAttribute(LegislationServiceEnum.DOC_URI.getType(), caseR.getURI());
                                 list2.appendChild(pcase2);
 
                                 //case passages
                                 for (Passage passageR : caseR.getPassages()) {
                                     //case passages
-                                    Element cpassage2 = document.createElement("Passage");
-                                    cpassage2.setAttribute("id", "" + passageR.getId());
-                                    cpassage2.setAttribute("documentURI", passageR.getURI());
+                                    Element cpassage2 = document.createElement(LegislationServiceEnum.PASSAGE.getType());
+                                    cpassage2.setAttribute(LegislationServiceEnum.ID.getType(), Integer.toString(passageR.getId()));
+                                    cpassage2.setAttribute(LegislationServiceEnum.DOC_URI.getType(), passageR.getURI());
                                     //case passage text
                                     Element casText2 = document.createElement("text");
                                     casText2.setTextContent("" + passageR.getText());
@@ -266,32 +224,28 @@ public class ArticeXmlBuilder implements XmlBuilder<LegalDocument, String> {
 
                         if(caseL.getModification() != null) {
                             //modification
-                            Element modification = document.createElement("Modification");
-                            modification.setAttribute("documentURI", caseL.getModification().getURI());
+                            Element modification = document.createElement(LegislationServiceEnum.MODIFICATION.getType());
+                            modification.setAttribute(LegislationServiceEnum.DOC_URI.getType(), caseL.getModification().getURI());
                             paragraphE.appendChild(modification);
 
-                            //modification type
-                            //Element modType = doc.createElement("type");
-                            //modType.setTextContent(legald.getArticles().get(i).getParagraphs().get(j).getModification().getType());
-                            //modification.appendChild(modType);
-
-                            if(caseL.getType().equals("Article")) {
+                            if(LegislationServiceEnum.ARTICLE.getType().equals(caseL.getType())) {
                                 Article a = (Article) caseL.getModification().getFragment();
-                                Element paragraphin = document.createElement("Article");
-                                paragraphin.setAttribute("id", "" + a.getId());
-                                paragraphin.setAttribute("documentURI", a.getURI());
+                                Element paragraphin = document.createElement(LegislationServiceEnum.ARTICLE.getType());
+                                paragraphin.setAttribute(LegislationServiceEnum.ID.getType(), a.getId());
+                                paragraphin.setAttribute(LegislationServiceEnum.DOC_URI.getType(), a.getURI());
                                 modification.appendChild(paragraphin);
 
                                 for (Paragraph par : a.getParagraphs()) {
-                                    paragraphin = document.createElement("Paragraph");
-                                    paragraphin.setAttribute("id", "" + par.getId());
-                                    paragraphin.setAttribute("documentURI", par.getURI());
+                                    paragraphin = document.createElement(LegislationServiceEnum.PARAGRAPH.getType());
+                                    paragraphin.setAttribute(LegislationServiceEnum.ID.getType(), par.getId());
+                                    paragraphin.setAttribute(LegislationServiceEnum.DOC_URI.getType(), par.getURI());
                                     modification.appendChild(paragraphin);
 
                                     for (Passage pass: par.getPassages()) {
-                                        Element passagein = document.createElement("Passage");
-                                        passagein.setAttribute("id", "" + pass.getId());
-                                        passagein.setAttribute("documentURI", pass.getURI());
+                                        Element passagein = document.createElement(LegislationServiceEnum.PASSAGE.getType());
+                                        passagein.setAttribute(LegislationServiceEnum.ID.getType(), Integer.toString(pass
+                                                .getId()));
+                                        passagein.setAttribute(LegislationServiceEnum.DOC_URI.getType(), pass.getURI());
                                         Element pasTextin = document.createElement("text");
                                         pasTextin.setTextContent(pass.getText());
                                         passagein.appendChild(pasTextin);
@@ -301,9 +255,11 @@ public class ArticeXmlBuilder implements XmlBuilder<LegalDocument, String> {
 
                                     for (Case casL : par.getCaseList()) {
                                         for (Passage pass2: casL.getPassages()) {
-                                            Element passagein2 = document.createElement("Passage");
-                                            passagein2.setAttribute("id", "" + pass2.getId());
-                                            passagein2.setAttribute("documentURI", pass2.getURI());
+                                            Element passagein2 = document.createElement(LegislationServiceEnum.PASSAGE.getType());
+                                            passagein2.setAttribute(LegislationServiceEnum.ID.getType(), Integer
+                                                    .toString(pass2.getId
+                                                    ()));
+                                            passagein2.setAttribute(LegislationServiceEnum.DOC_URI.getType(), pass2.getURI());
                                             Element pasTextin2 = document.createElement("text");
                                             pasTextin2.setTextContent(pass2.getText());
                                             passagein2.appendChild(pasTextin2);
@@ -312,19 +268,17 @@ public class ArticeXmlBuilder implements XmlBuilder<LegalDocument, String> {
                                         }
                                     }
                                 }
-
-                                //paragraph.appendChild(modification);
-                            } else if(caseL.getModification().getType().equals("Paragraph")) {
+                            } else if(caseL.getModification().getType().equals(LegislationServiceEnum.PARAGRAPH.getType())) {
                                 Paragraph p = (Paragraph) caseL.getModification().getFragment();
-                                Element paragraphin = document.createElement("Paragraph");
-                                paragraphin.setAttribute("id", "" + p.getId());
-                                paragraphin.setAttribute("documentURI", p.getURI());
+                                Element paragraphin = document.createElement(LegislationServiceEnum.PARAGRAPH.getType());
+                                paragraphin.setAttribute(LegislationServiceEnum.ID.getType(), p.getId());
+                                paragraphin.setAttribute(LegislationServiceEnum.DOC_URI.getType(), p.getURI());
                                 modification.appendChild(paragraphin);
 
                                 for (Passage pass: p.getPassages()) {
-                                    Element passagein = document.createElement("Passage");
-                                    passagein.setAttribute("id", "" + pass.getId());
-                                    passagein.setAttribute("documentURI", pass.getURI());
+                                    Element passagein = document.createElement(LegislationServiceEnum.PASSAGE.getType());
+                                    passagein.setAttribute(LegislationServiceEnum.ID.getType(), Integer.toString(pass.getId()));
+                                    passagein.setAttribute(LegislationServiceEnum.DOC_URI.getType(), pass.getURI());
                                     Element pasTextin = document.createElement("text");
                                     pasTextin.setTextContent(pass.getText());
                                     passagein.appendChild(pasTextin);
@@ -334,9 +288,10 @@ public class ArticeXmlBuilder implements XmlBuilder<LegalDocument, String> {
 
                                 for (Case case2 : p.getCaseList()) {
                                     for (Passage pass2 : case2.getPassages()) {
-                                        Element passagein2 = document.createElement("Passage");
-                                        passagein2.setAttribute("id", "" + pass2.getId());
-                                        passagein2.setAttribute("documentURI", pass2.getURI());
+                                        Element passagein2 = document.createElement(LegislationServiceEnum.PASSAGE.getType());
+                                        passagein2.setAttribute(LegislationServiceEnum.ID.getType(), Integer.toString(pass2
+                                                .getId()));
+                                        passagein2.setAttribute(LegislationServiceEnum.DOC_URI.getType(), pass2.getURI());
                                         Element pasTextin2 = document.createElement("text");
                                         pasTextin2.setTextContent(pass2.getText());
                                         passagein2.appendChild(pasTextin2);
@@ -344,32 +299,29 @@ public class ArticeXmlBuilder implements XmlBuilder<LegalDocument, String> {
                                         paragraphin.appendChild(passagein2);
                                     }
                                 }
-
-                                //paragraph.appendChild(modification);
-                            } else if(caseL.getModification().getType().equals("Case")) {
+                            } else if(caseL.getModification().getType().equals(LegislationServiceEnum.CASE.getType())) {
                                 Case c = (Case) caseL.getModification().getFragment();
-                                Element paragraphin = document.createElement("Case");
-                                paragraphin.setAttribute("id", "" + c.getId());
-                                paragraphin.setAttribute("documentURI", c.getURI());
+                                Element paragraphin = document.createElement(LegislationServiceEnum.CASE.getType());
+                                paragraphin.setAttribute(LegislationServiceEnum.ID.getType(), Integer.toString(c.getId()));
+                                paragraphin.setAttribute(LegislationServiceEnum.DOC_URI.getType(), c.getURI());
                                 modification.appendChild(paragraphin);
 
                                 for (Passage pass : c.getPassages()) {
-                                    Element passage = document.createElement("Passage");
-                                    passage.setAttribute("id", "" + pass.getId());
-                                    passage.setAttribute("documentURI", pass.getURI());
+                                    Element passage = document.createElement(LegislationServiceEnum.PASSAGE.getType());
+                                    passage.setAttribute(LegislationServiceEnum.ID.getType(), Integer.toString(pass.getId()));
+                                    passage.setAttribute(LegislationServiceEnum.DOC_URI.getType(), pass.getURI());
                                     Element pasText = document.createElement("text");
                                     pasText.setTextContent(pass.getText());
                                     passage.appendChild(pasText);
 
                                     paragraphin.appendChild(passage);
                                 }
-
-                                //paragraph.appendChild(modification);
-                            } else if(caseL.getModification().getType().equals("Passage")) {
+                            } else if(caseL.getModification().getType().equals(LegislationServiceEnum.PASSAGE.getType())) {
                                 Passage pas = (Passage) caseL.getModification().getFragment();
-                                Element passage = document.createElement("Passage");
-                                passage.setAttribute("id", "" + pas.getId());
-                                passage.setAttribute("documentURI", pas.getURI());
+                                Element passage = document.createElement(LegislationServiceEnum.PASSAGE.getType());
+                                passage.setAttribute(LegislationServiceEnum.ID.getType(), Integer.toString(pas.getId
+                                        ()));
+                                passage.setAttribute(LegislationServiceEnum.DOC_URI.getType(), pas.getURI());
                                 Element pasText = document.createElement("text");
                                 pasText.setTextContent(pas.getText());
                                 passage.appendChild(pasText);
@@ -381,14 +333,9 @@ public class ArticeXmlBuilder implements XmlBuilder<LegalDocument, String> {
 
                     for (Passage passPar: paragraph.getPassages()) {
                         //paragraph passages
-                        Element passage = document.createElement("Passage");
-                        passage.setAttribute("id", "" + passPar.getId());
-                        passage.setAttribute("documentURI", passPar.getURI());
-
-                        //passage id
-                        //Element pasId = doc.createElement("Id");
-                        //pasId.setTextContent("" + legald.getArticles().get(i).getParagraphs().get(j).getPassages().get(k).getId());
-                        //passage.appendChild(pasId);
+                        Element passage = document.createElement(LegislationServiceEnum.PASSAGE.getType());
+                        passage.setAttribute(LegislationServiceEnum.ID.getType(), Integer.toString(passPar.getId()));
+                        passage.setAttribute(LegislationServiceEnum.DOC_URI.getType(), passPar.getURI());
 
                         //passage text
                         Element pasText = document.createElement("text");
@@ -399,32 +346,28 @@ public class ArticeXmlBuilder implements XmlBuilder<LegalDocument, String> {
 
                         if(passPar.getModification() != null) {
                             //modification
-                            Element modification = document.createElement("Modification");
-                            modification.setAttribute("documentURI", passPar.getModification().getURI());
+                            Element modification = document.createElement(LegislationServiceEnum.MODIFICATION.getType());
+                            modification.setAttribute(LegislationServiceEnum.DOC_URI.getType(), passPar.getModification().getURI());
                             paragraphE.appendChild(modification);
 
-                            //modification type
-                            //Element modType = doc.createElement("type");
-                            //modType.setTextContent(legald.getArticles().get(i).getParagraphs().get(j).getModification().getType());
-                            //modification.appendChild(modType);
-
-                            if(passPar.getModification().getType().equals("Article")) {
+                            if(LegislationServiceEnum.ARTICLE.getType().equals(passPar.getModification().getType())) {
                                 Article a = (Article) passPar.getModification().getFragment();
-                                Element paragraphin = document.createElement("Article");
-                                paragraphin.setAttribute("id", "" + a.getId());
-                                paragraphin.setAttribute("documentURI", a.getURI());
+                                Element paragraphin = document.createElement(LegislationServiceEnum.ARTICLE.getType());
+                                paragraphin.setAttribute(LegislationServiceEnum.ID.getType(), a.getId());
+                                paragraphin.setAttribute(LegislationServiceEnum.DOC_URI.getType(), a.getURI());
                                 modification.appendChild(paragraphin);
 
                                 for (Paragraph par : a.getParagraphs()) {
-                                    paragraphin = document.createElement("Paragraph");
-                                    paragraphin.setAttribute("id", "" + par.getId());
-                                    paragraphin.setAttribute("documentURI", par.getURI());
+                                    paragraphin = document.createElement(LegislationServiceEnum.PARAGRAPH.getType());
+                                    paragraphin.setAttribute(LegislationServiceEnum.ID.getType(), par.getId());
+                                    paragraphin.setAttribute(LegislationServiceEnum.DOC_URI.getType(), par.getURI());
                                     modification.appendChild(paragraphin);
 
                                     for (Passage pass : par.getPassages()) {
-                                        Element passagein = document.createElement("Passage");
-                                        passagein.setAttribute("id", "" + pass.getId());
-                                        passagein.setAttribute("documentURI",pass.getURI());
+                                        Element passagein = document.createElement(LegislationServiceEnum.PASSAGE.getType());
+                                        passagein.setAttribute(LegislationServiceEnum.ID.getType(), Integer.toString(pass.getId
+                                                ()));
+                                        passagein.setAttribute(LegislationServiceEnum.DOC_URI.getType(),pass.getURI());
                                         Element pasTextin = document.createElement("text");
                                         pasTextin.setTextContent(pass.getText());
                                         passagein.appendChild(pasTextin);
@@ -434,9 +377,11 @@ public class ArticeXmlBuilder implements XmlBuilder<LegalDocument, String> {
 
                                     for (Case case3 : paragraph.getCaseList()) {
                                         for (Passage pass3 : case3.getPassages()) {
-                                            Element passagein2 = document.createElement("Passage");
-                                            passagein2.setAttribute("id", "" + pass3.getId());
-                                            passagein2.setAttribute("documentURI", pass3.getURI());
+                                            Element passagein2 = document.createElement(LegislationServiceEnum.PASSAGE.getType());
+                                            passagein2.setAttribute(LegislationServiceEnum.ID.getType(), Integer
+                                                    .toString(pass3.getId
+                                                    ()));
+                                            passagein2.setAttribute(LegislationServiceEnum.DOC_URI.getType(), pass3.getURI());
                                             Element pasTextin2 = document.createElement("text");
                                             pasTextin2.setTextContent(pass3.getText());
                                             passagein2.appendChild(pasTextin2);
@@ -445,19 +390,17 @@ public class ArticeXmlBuilder implements XmlBuilder<LegalDocument, String> {
                                         }
                                     }
                                 }
-
-                                //paragraph.appendChild(modification);
-                            } else if(passPar.getModification().getType().equals("Paragraph")) {
+                            } else if(passPar.getModification().getType().equals(LegislationServiceEnum.PARAGRAPH.getType())) {
                                 Paragraph p = (Paragraph) passPar.getModification().getFragment();
-                                Element paragraphin = document.createElement("Paragraph");
-                                paragraphin.setAttribute("id", "" + p.getId());
-                                paragraphin.setAttribute("documentURI", p.getURI());
+                                Element paragraphin = document.createElement(LegislationServiceEnum.PARAGRAPH.getType());
+                                paragraphin.setAttribute(LegislationServiceEnum.ID.getType(), p.getId());
+                                paragraphin.setAttribute(LegislationServiceEnum.DOC_URI.getType(), p.getURI());
                                 modification.appendChild(paragraphin);
 
                                 for (Passage pass: p.getPassages()) {
-                                    Element passagein = document.createElement("Passage");
-                                    passagein.setAttribute("id", "" + pass.getId());
-                                    passagein.setAttribute("documentURI", pass.getURI());
+                                    Element passagein = document.createElement(LegislationServiceEnum.PASSAGE.getType());
+                                    passagein.setAttribute(LegislationServiceEnum.ID.getType(), Integer.toString(pass.getId()));
+                                    passagein.setAttribute(LegislationServiceEnum.DOC_URI.getType(), pass.getURI());
                                     Element pasTextin = document.createElement("text");
                                     pasTextin.setTextContent(pass.getText());
                                     passagein.appendChild(pasTextin);
@@ -467,9 +410,10 @@ public class ArticeXmlBuilder implements XmlBuilder<LegalDocument, String> {
 
                                 for (Case caseL: p.getCaseList()) {
                                     for (Passage pass2: caseL.getPassages()) {
-                                        Element passagein2 = document.createElement("Passage");
-                                        passagein2.setAttribute("id", "" + pass2.getId());
-                                        passagein2.setAttribute("documentURI", pass2.getURI());
+                                        Element passagein2 = document.createElement(LegislationServiceEnum.PASSAGE.getType());
+                                        passagein2.setAttribute(LegislationServiceEnum.ID.getType(), Integer.toString(pass2
+                                                .getId()));
+                                        passagein2.setAttribute(LegislationServiceEnum.DOC_URI.getType(), pass2.getURI());
                                         Element pasTextin2 = document.createElement("text");
                                         pasTextin2.setTextContent(pass2.getText());
                                         passagein2.appendChild(pasTextin2);
@@ -477,32 +421,29 @@ public class ArticeXmlBuilder implements XmlBuilder<LegalDocument, String> {
                                         paragraphin.appendChild(passagein2);
                                     }
                                 }
-
-                                //paragraph.appendChild(modification);
-                            } else if(passPar.getModification().getType().equals("Case")) {
+                            } else if(passPar.getModification().getType().equals(LegislationServiceEnum.CASE.getType())) {
                                 Case c = (Case) passPar.getModification().getFragment();
-                                Element paragraphin = document.createElement("Case");
-                                paragraphin.setAttribute("id", "" + c.getId());
-                                paragraphin.setAttribute("documentURI", c.getURI());
+                                Element paragraphin = document.createElement(LegislationServiceEnum.CASE.getType());
+                                paragraphin.setAttribute(LegislationServiceEnum.ID.getType(), Integer.toString(c.getId()));
+                                paragraphin.setAttribute(LegislationServiceEnum.DOC_URI.getType(), c.getURI());
                                 modification.appendChild(paragraphin);
 
                                 for (Passage pass: c.getPassages()) {
-                                    passage = document.createElement("Passage");
-                                    passage.setAttribute("id", "" + pass.getId());
-                                    passage.setAttribute("documentURI",pass.getURI());
+                                    passage = document.createElement(LegislationServiceEnum.PASSAGE.getType());
+                                    passage.setAttribute(LegislationServiceEnum.ID.getType(), Integer.toString(pass.getId()));
+                                    passage.setAttribute(LegislationServiceEnum.DOC_URI.getType(),pass.getURI());
                                     pasText = document.createElement("text");
                                     pasText.setTextContent(pass.getText());
                                     passage.appendChild(pasText);
 
                                     paragraphin.appendChild(passage);
                                 }
-
-                                //paragraph.appendChild(modification);
-                            } else if(passPar.getModification().getType().equals("Passage")) {
+                            } else if(passPar.getModification().getType().equals(LegislationServiceEnum.PASSAGE.getType())) {
                                 Passage pas = (Passage) passPar.getModification().getFragment();
-                                passage = document.createElement("Passage");
-                                passage.setAttribute("id", "" + pas.getId());
-                                passage.setAttribute("documentURI", pas.getURI());
+                                passage = document.createElement(LegislationServiceEnum.PASSAGE.getType());
+                                passage.setAttribute(LegislationServiceEnum.ID.getType(), Integer.toString(pas.getId
+                                        ()));
+                                passage.setAttribute(LegislationServiceEnum.DOC_URI.getType(), pas.getURI());
                                 pasText = document.createElement("text");
                                 pasText.setTextContent(pas.getText());
                                 passage.appendChild(pasText);
